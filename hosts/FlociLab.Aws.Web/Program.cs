@@ -18,6 +18,7 @@ using FlociLab.Aws.GlobalAccelerator;
 using FlociLab.Aws.Iam;
 using FlociLab.Aws.IdentityCenter;
 using FlociLab.Aws.Kms;
+using FlociLab.Aws.Organizations;
 using FlociLab.Aws.Route53;
 using FlociLab.Aws.Route53Resolver;
 using FlociLab.Aws.S3;
@@ -70,7 +71,8 @@ builder.Services
     .AddAwsCognitoDemo()
     .AddAwsStsDemo()
     .AddAwsIdentityCenterDemo()
-    .AddAwsAccessAnalyzerDemo();
+    .AddAwsAccessAnalyzerDemo()
+    .AddAwsOrganizationsDemo();
 
 WebApplication app = builder.Build();
 
