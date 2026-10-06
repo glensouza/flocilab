@@ -39,6 +39,7 @@
     <ProjectReference Include="..\..\samples\aws\cognito\FlociLab.Aws.Cognito.Demo\FlociLab.Aws.Cognito.Demo.csproj" />
     <ProjectReference Include="..\..\samples\aws\sts\FlociLab.Aws.Sts.Demo\FlociLab.Aws.Sts.Demo.csproj" />
     <ProjectReference Include="..\..\samples\aws\identitycenter\FlociLab.Aws.IdentityCenter.Demo\FlociLab.Aws.IdentityCenter.Demo.csproj" />
+    <ProjectReference Include="..\..\samples\aws\accessanalyzer\FlociLab.Aws.AccessAnalyzer.Demo\FlociLab.Aws.AccessAnalyzer.Demo.csproj" />
     <ProjectReference Include="..\..\samples\aws\route53\FlociLab.Aws.Route53.Demo\FlociLab.Aws.Route53.Demo.csproj" />
     <ProjectReference Include="..\..\samples\aws\route53resolver\FlociLab.Aws.Route53Resolver.Demo\FlociLab.Aws.Route53Resolver.Demo.csproj" />
     <ProjectReference Include="..\..\samples\azure\blob\FlociLab.Azure.Blob.Demo\FlociLab.Azure.Blob.Demo.csproj" />

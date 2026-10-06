@@ -4,9 +4,9 @@ A living plan and progress tracker for building **one .NET sample per Floci-emul
 composable into per-provider Blazor apps and a unified side-by-side comparison app, orchestrated by
 Aspire.
 
-**Status:** Phase 0–2 complete · Phase 3 under way · **43 / 183 services** (1 ⊘ — sample and test ship,
+**Status:** Phase 0–2 complete · Phase 3 under way · **44 / 183 services** (1 ⊘ — sample and test ship,
 the emulator does not implement the service) · **5 / 5 comparison pages**
-**Last updated:** 2026-09-29
+**Last updated:** 2026-10-06
 
 ---
 
@@ -807,7 +807,7 @@ Legend: ☐ not started · ◐ in progress · ☑ demo + test passing · ⊘ emu
 Per service: **RCL** (page + wrapper) · **T** (integration test) · **C** (capability, where an
 analog exists).
 
-### AWS — `floci` :4566 — 28/119
+### AWS — `floci` :4566 — 29/119
 
 Rows follow the service cards on [floci.io/aws](https://floci.io/aws/), split only where the .NET
 SDK splits the package (constraint 1): EventBridge/Pipes/Scheduler, SES v1/v2, Bedrock/Runtime,
@@ -864,14 +864,14 @@ running a real engine in Docker, which is what makes it Phase 4. Re-synced again
 </details>
 
 <details>
-<summary><strong>Identity and access (2/9)</strong></summary>
+<summary><strong>Identity and access (4/9)</strong></summary>
 
 | ☐ | Service | Kind |
 |:-:|:---|:---|
 | ☑ | STS | A |
 | ☑ | Cognito | A |
 | ☑ | IAM Identity Center | C |
-| ☐ | IAM Access Analyzer | C |
+| ☑ | IAM Access Analyzer | C |
 | ☐ | Organizations | C |
 | ☐ | Resource Access Manager | C |
 | ☐ | AWS Account | C |
@@ -1204,6 +1204,7 @@ One row per card on [floci.io/gcp](https://floci.io/gcp/). Re-synced against flo
 | **floci 2.1.0's STS assumes any role ARN, ignores `DurationSeconds`, and names every session `floci-session`** | The sample cannot show the `AccessDenied` real STS gives a role that does not exist or does not trust the caller, or the `ValidationError` for a `DurationSeconds` outside 900–43200 (`1` and `99999` both succeed, and the credentials' `Expiration` follows the request). `GetCallerIdentity` signed with an assumed-role key reports `assumed-role/<role>/floci-session`, not the `RoleSessionName` that was asked for. `GetAccessKeyInfo` answers `UnsupportedOperation` | Found building the sample, 2026-09-29, by probing `Action=…` against :4566. The sample's role ARN is built from the caller's account id and never created, so it needs no IAM call (constraint 1); against real AWS substitute a role you can assume. What floci *does* do as real STS does: the assumed-role key resolves back to its role, so the sample's second `GetCallerIdentity` asserts the ARN contains `:assumed-role/<role>/` — deliberately not the session name. `AssumeRoleWithSAML` refuses with `InvalidIdentityToken` ("The SAML provider is not trusted") while `AssumeRoleWithWebIdentity` accepts any token, so neither is in the run. The page never renders the secret access key or session token (it can be pointed at real AWS). `AwsStsTests.AssumeRole_Accepts_A_Role_That_Was_Never_Created`, `AssumeRole_Ignores_Duration_Bounds_And_The_Session_Name` and `GetAccessKeyInfo_Is_Not_Supported` are the tripwires. **Found in review, 2026-09-29:** on real AWS, `GetSessionToken` and `GetFederationToken` need long-term IAM user keys and answer `AccessDenied` to anything temporary (SSO, an assumed profile role, IMDS/ECS), which is the usual SDK-chain outcome, so those two steps fail there unless the chain resolves to an access key pair. floci accepts either. Also from review: a failed `AssumeRole` now yields an explicit "Skipped" identity step rather than silently running four steps, and the credentials are kept only after every field has been checked |
 | **floci 2.1.0's Cognito ignores a client's `ExplicitAuthFlows` and the pool's password policy, and stamps every token `iss: http://localhost:4566/<pool>`** | A client created with no `ExplicitAuthFlows` (stored as `[]`) still gets tokens from `USER_PASSWORD_AUTH`, where real Cognito answers `InvalidParameterException: USER_PASSWORD_AUTH flow not enabled for this client`. `AdminSetUserPassword` and `SignUp` accept `abc` and `x` under the default policy, where AWS answers `InvalidPasswordException`. The token `iss` is fixed at `http://localhost:4566/<poolId>` whatever host or port the request used, so a JWT bearer `Authority` built from the configured endpoint will not match it | Found probing a throwaway container during /ship, 2026-09-29. floci is faithful elsewhere: a `FORCE_CHANGE_PASSWORD` user gets a `NEW_PASSWORD_REQUIRED` challenge, an unconfirmed sign-up gets `UserNotConfirmedException`, a tampered token and a token after `GlobalSignOut` get `NotAuthorizedException`, and `/<poolId>/.well-known/jwks.json` serves the RS256 key. The sample sets `ALLOW_USER_PASSWORD_AUTH` and a policy-compliant generated password, so the same code works on real Cognito; forgetting either passes on floci and fails in production — the Short's gotcha. Pinned by `AwsCognitoTests.Floci_Ignores_The_Client_Auth_Flows_And_The_Password_Policy` |
 | **IAM Identity Center is split across two .NET packages, and floci ships exactly one instance** | The sample uses `AWSSDK.SSOAdmin` only (constraint 1), so it covers instances and permission sets — create, duplicate refusal, managed and inline policies, update, tags, provision, delete — and stops short of users, groups and account assignments, which need `AWSSDK.IdentityStore`. Those would be a second sample or an architecture call | Found building the sample, 2026-09-29, by probing `SWBExternalService.*` on :4566. floci answers `ListInstances` with one instance, `floci-identity-center` (`ssoins-…`, identity store `d-…`), and `CreateInstance` refuses a second with `ServiceQuotaExceededException` (one instance per account, as on real AWS), so the sample takes the first one; on real AWS it throws a clear error if Identity Center is not enabled. `ProvisionPermissionSet` answers `SUCCEEDED` at once — even to `AWS_ACCOUNT` `999999999999`, which exists nowhere — where real AWS answers `IN_PROGRESS`, so the sample polls `DescribePermissionSetProvisioningStatus`, and uses `ALL_PROVISIONED_ACCOUNTS` so no account id is needed. Permission-set ARNs are server-minted and there is no lookup by name, so cleanup pages `ListPermissionSets` and describes each. Duplicate names give `ConflictException` and a deleted set gives `ResourceNotFoundException`, as on real AWS (both asserted by steps). `AwsIdentityCenterTests.Emulator_Behaviours_The_Sample_Documents` pins the single-instance assumption. **Found in review, 2026-09-29:** a failed `ListInstances` (real AWS without Identity Center enabled) or `CreatePermissionSet` let the run carry on with empty ARNs, burying the cause under a dozen red steps and letting the duplicate check pass for the wrong reason; both now stop the run (`Run_Stops_At_ListInstances_When_It_Fails`). A duplicate the server wrongly accepts is now deleted by the step that created it, since the delete and the cleanup each account for one set. The cleanup's list-then-describe skips an ARN another run deleted meanwhile, since the instance is shared |
+| **floci 2.1.0's Access Analyzer implements only CreateAnalyzer, ListAnalyzers and DeleteAnalyzer** | The sample cannot show `GetAnalyzer`, archive rules, findings, `ValidatePolicy` or the tag calls — the parts of Access Analyzer people actually use it for. It is a create/duplicate/list/delete round-trip of an `ACCOUNT` analyzer and no more | Found building the sample, 2026-09-29, by probing the REST routes on :4566. Every other operation answers `UnknownOperationException` (HTTP 404, not 501), and `TagResource`/`ListTagsForResource` answer `BadRequestException: Invalid resource ARN` for the very ARN `CreateAnalyzer` returned, so tags can be set only through `CreateAnalyzer` and read back through `ListAnalyzers`. floci is faithful where it does answer: `ConflictException` on a duplicate name, `ResourceNotFoundException` on deleting a missing one, `ValidationException` for a bad `type`, analyzers `ACTIVE` at once where real AWS starts `CREATING` (the sample polls, the `INSYNC` corollary). Because there is no `GetAnalyzer`, the sample reads state back through `ListAnalyzers`. Real AWS allows one `ACCOUNT` analyzer per region, so the create fails there if the account already has one. `AwsAccessAnalyzerTests.Floci_Implements_Only_Create_List_And_Delete` is the tripwire: when it fails, upstream shipped an operation, so add a step for it |
 
 ---
 

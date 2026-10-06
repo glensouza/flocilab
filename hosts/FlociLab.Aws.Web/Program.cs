@@ -1,4 +1,5 @@
 using System.Reflection;
+using FlociLab.Aws.AccessAnalyzer;
 using FlociLab.Aws.ApiGatewayRest;
 using FlociLab.Aws.ApiGatewayV2;
 using FlociLab.Aws.AppSync;
@@ -68,7 +69,8 @@ builder.Services
     .AddAwsGlobalAcceleratorDemo()
     .AddAwsCognitoDemo()
     .AddAwsStsDemo()
-    .AddAwsIdentityCenterDemo();
+    .AddAwsIdentityCenterDemo()
+    .AddAwsAccessAnalyzerDemo();
 
 WebApplication app = builder.Build();
 

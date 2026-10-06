@@ -22,6 +22,7 @@
     <Project Path="samples/aws/cognito/FlociLab.Aws.Cognito.Demo/FlociLab.Aws.Cognito.Demo.csproj" />
     <Project Path="samples/aws/sts/FlociLab.Aws.Sts.Demo/FlociLab.Aws.Sts.Demo.csproj" />
     <Project Path="samples/aws/identitycenter/FlociLab.Aws.IdentityCenter.Demo/FlociLab.Aws.IdentityCenter.Demo.csproj" />
+    <Project Path="samples/aws/accessanalyzer/FlociLab.Aws.AccessAnalyzer.Demo/FlociLab.Aws.AccessAnalyzer.Demo.csproj" />
     <Project Path="samples/aws/stepfunctions/FlociLab.Aws.StepFunctions.Demo/FlociLab.Aws.StepFunctions.Demo.csproj" />
     <Project Path="samples/aws/swf/FlociLab.Aws.Swf.Demo/FlociLab.Aws.Swf.Demo.csproj" />
   </Folder>

@@ -34,6 +34,7 @@
     package, so no sample gains a dependency it did not already have.
   -->
   <ItemGroup>
+    <PackageVersion Include="AWSSDK.AccessAnalyzer" Version="4.0.100.14" />
     <PackageVersion Include="AWSSDK.APIGateway" Version="4.0.101" />
     <PackageVersion Include="AWSSDK.ApiGatewayV2" Version="4.0.100.14" />
     <PackageVersion Include="AWSSDK.ApiGatewayManagementApi" Version="4.0.100.15" />
