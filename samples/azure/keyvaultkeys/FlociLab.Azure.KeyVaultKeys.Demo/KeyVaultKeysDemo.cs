@@ -14,13 +14,9 @@ namespace FlociLab.Azure.KeyVaultKeys;
 /// Azure Key Vault Keys against floci-az. Ordinary Azure.Security.KeyVault.Keys code — the only
 /// emulator-aware line in the sample is in <see cref="KeyVaultKeysClientFactory"/>.
 ///
-/// floci-az routes <c>/keys</c> since 0.13.0 but has both bugs that release fixed on Secrets
-/// (docs/BLAZOR-PLAN.md §14): the SDK's trailing-slash <c>GET keys/</c> list is misrouted as a get
-/// of a key named "" and answers <c>KeyNotFound</c>, and key bodies carry unset
-/// <c>attributes.nbf</c>/<c>attributes.exp</c> as JSON <c>null</c>. So <see cref="ProbeAsync"/> reports
-/// <see cref="ProbeStatus.Error"/> rather than <see cref="ProbeStatus.Ok"/>, and every step in
-/// <see cref="RunAsync"/> fails, cleanup included. This is recorded rather than worked around, the
-/// same choice the Queue Storage sample makes for its own gap.
+/// This sample was ⊘ through floci-az 0.13.0: the SDK's trailing-slash <c>GET keys/</c> list was
+/// misrouted, and key bodies carried unset <c>attributes.nbf</c>/<c>exp</c> as JSON <c>null</c>.
+/// floci-az 0.14.0 fixed both, via floci-az PR #349 from this project (docs/BLAZOR-PLAN.md §14).
 /// </summary>
 public sealed class KeyVaultKeysDemo(KeyVaultKeysClientFactory factory) : IServiceDemo
 {
@@ -97,10 +93,10 @@ public sealed class KeyVaultKeysDemo(KeyVaultKeysClientFactory factory) : IServi
                 $"POST {factory.ServiceUrl}/keys/{name}/create\nclient.CreateKeyAsync(\"{name}\", KeyType.Rsa)",
                 async () =>
                 {
-                    // Claimed before the call, not after: floci-az 0.13.0 creates the key and then
-                    // sends a response the SDK cannot parse (§14), so a key exists that no response
-                    // ever named. Cleanup deletes by name and treats a 404 as nothing to remove,
-                    // so claiming early is free.
+                    // Claimed before the call, not after: a create can land while its response is
+                    // lost — a cancelled run, or floci-az 0.13.0's unparseable reply (§14) — leaving
+                    // a key no response ever named. Cleanup deletes by name and treats a 404 as
+                    // nothing to remove, so claiming early is free.
                     created = true;
                     Response<KeyVaultKey> response = await client.CreateKeyAsync(name, KeyType.Rsa, cancellationToken: ct).ConfigureAwait(false);
 
@@ -259,15 +255,7 @@ public sealed class KeyVaultKeysDemo(KeyVaultKeysClientFactory factory) : IServi
         {
             try
             {
-                Exception? unreadableReply = await KeyVaultKeyCleanup.DeleteAndPurgeAsync(client, name).ConfigureAwait(false);
-
-                // Still red: the key is gone, but the delete's own reply was not one real Key
-                // Vault would send, and a green step would hide that.
-                if (unreadableReply is not null)
-                {
-                    throw new InvalidOperationException(
-                        $"Deleted and purged, but the delete's reply could not be read: {unreadableReply.Message}", unreadableReply);
-                }
+                await KeyVaultKeyCleanup.DeleteAndPurgeAsync(client, name).ConfigureAwait(false);
 
                 return "Deleted and purged"
                     + (ct.IsCancellationRequested ? "\n(the run was cancelled; cleanup ran anyway)" : string.Empty);

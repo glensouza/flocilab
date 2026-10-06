@@ -185,6 +185,10 @@ public sealed class AzureServiceBusTests : IAsyncLifetime
 
         Assert.All(steps, s => Assert.True(s.Succeeded, $"{s.Title}: {s.Error}"));
         Assert.Contains("Hello from FlociLab.", steps[3].Response);
+
+        // A first delivery counts 1, as on real Service Bus. floci-az 0.13.0 reported 2; 0.14.0
+        // restored zero-based AMQP delivery counts (floci-az #314, plan §13).
+        Assert.Contains("DeliveryCount: 1", steps[3].Response);
     }
 
     /// <summary>

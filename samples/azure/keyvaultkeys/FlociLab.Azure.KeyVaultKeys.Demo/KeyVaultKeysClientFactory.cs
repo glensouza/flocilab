@@ -10,10 +10,8 @@ namespace FlociLab.Azure.KeyVaultKeys;
 /// (docs/BLAZOR-PLAN.md §7, §14), and a <c>TokenCredential</c> from
 /// <c>FlociLab.Azure.Endpoints</c> rather than an account key.
 ///
-/// floci-az routes <c>/keys</c> since 0.13.0, but misroutes the SDK's trailing-slash list and
-/// sends <c>attributes.nbf</c>/<c>attributes.exp</c> as JSON <c>null</c> in every key body, which
-/// the SDK cannot parse (docs/BLAZOR-PLAN.md §14).
-/// That is a documented gap to record, same as Queue Storage's, not something to work around here.
+/// floci-az 0.13.0 misrouted the SDK's trailing-slash list and sent <c>attributes.nbf</c>/<c>exp</c>
+/// as JSON <c>null</c>; 0.14.0 fixed both (floci-az PR #349, docs/BLAZOR-PLAN.md §14).
 /// </summary>
 public sealed class KeyVaultKeysClientFactory(AzureEndpoints endpoints)
 {
@@ -74,15 +72,22 @@ public sealed class KeyVaultKeysClientFactory(AzureEndpoints endpoints)
         CryptographyClientOptions options = new();
         options.Retry.MaxRetries = 0;
 
-        if (endpoints.UseEmulator)
+        if (!endpoints.UseEmulator)
         {
-            // Same reason as Create() above — CryptographyClient carries its own auth policy. The
-            // key id, not VaultUri: it is the address this client actually connects to, and it is
-            // the vault's own answer rather than configuration.
-            options.AllowInsecureBearerToken(keyId);
-            options.DisableChallengeResourceVerification = true;
+            return new CryptographyClient(keyId, endpoints.Credential(), options);
         }
 
-        return new CryptographyClient(keyId, endpoints.Credential(), options);
+        // floci-az reports every key id on the production host — https://{account}.vault.azure.net,
+        // hardcoded in its KeyVaultKeys.vaultHost (0.14.0), not echoed from the request — so a
+        // client built from the id as-is would send this run's bearer token to real Azure. Keep the
+        // vault's own /keys/{name}/{version} path and re-address it at the configured emulator, the
+        // same move QueueClientFactory makes with OCI's messagesEndpoint (docs/BLAZOR-PLAN.md §14).
+        Uri emulatorKeyId = new(this.VaultUri, keyId.AbsolutePath);
+
+        // Same reason as Create() above — CryptographyClient carries its own auth policy.
+        options.AllowInsecureBearerToken(emulatorKeyId);
+        options.DisableChallengeResourceVerification = true;
+
+        return new CryptographyClient(emulatorKeyId, endpoints.Credential(), options);
     }
 }

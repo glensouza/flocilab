@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using Azure;
 using Azure.Security.KeyVault.Keys;
 using DotNet.Testcontainers.Builders;
@@ -16,14 +15,11 @@ namespace FlociLab.IntegrationTests;
 /// One throwaway floci-az per class (docs/BLAZOR-PLAN.md §10). Nothing here talks to the emulator
 /// the AppHost runs, so the suite passes on a machine that has never started the lab.
 ///
-/// Through floci-az 0.12.0, the Key Vault router implemented <c>/secrets</c> only and every
-/// <c>/keys</c> route answered a plain 404 — see <see cref="AzureKeyVaultSecretsTests"/> for the
-/// sample that authenticates fine and fails for different reasons. 0.13.0 added real
-/// <c>/keys</c> routing, confirmed 2026-09-28, but <c>CreateKey</c> now hits the very
-/// response-shape bug Secrets used to have before 0.13.0 also fixed it there: floci-az still sends
-/// <c>attributes.nbf</c>/<c>attributes.exp</c> as JSON <c>null</c> on the Keys plane, so the SDK's
-/// model throws parsing it (§14). Key Vault Keys remains unusable, just for a different reason than
-/// before.
+/// Key Vault Keys was ⊘ from 2026-09-01 to 2026-10-06. Through floci-az 0.12.0 every <c>/keys</c>
+/// route answered a plain 404. 0.13.0 routed them but misrouted the SDK's trailing-slash list and
+/// sent unset <c>attributes.nbf</c>/<c>exp</c> as JSON <c>null</c>, which the SDK cannot parse.
+/// floci-az 0.14.0 fixed both, through floci-az PR #349 (issue #348) from this project (§14). These
+/// tests used to pin the failures; they now pin the round trip.
 /// </summary>
 [Collection(nameof(AzureKeyVaultCollection))]
 public sealed class AzureKeyVaultKeysTests : IAsyncLifetime
@@ -48,17 +44,12 @@ public sealed class AzureKeyVaultKeysTests : IAsyncLifetime
 
     private string Endpoint => $"http://{this.flociAz.Hostname}:{this.flociAz.GetMappedPublicPort(FlociAzPort)}";
 
-    /// <summary>
-    /// Not the 501 shape <see cref="ProbeResult.FromException"/> recognises as NotImplemented — the
-    /// <c>/keys</c> route exists since 0.13.0 and answers, but badly (see
-    /// <see cref="CreateKey_Throws_Because_Nbf_And_Exp_Are_Null_Not_Omitted"/>).
-    /// </summary>
     [Fact]
-    public async Task Probe_Reports_Error()
+    public async Task Probe_Reports_Ok()
     {
         ProbeResult result = await new KeyVaultKeysDemo(this.factory).ProbeAsync(TestContext.Current.CancellationToken);
 
-        Assert.Equal(ProbeStatus.Error, result.Status);
+        Assert.Equal(ProbeStatus.Ok, result.Status);
     }
 
     /// <summary>
@@ -76,21 +67,10 @@ public sealed class AzureKeyVaultKeysTests : IAsyncLifetime
         Assert.Equal(ProbeStatus.Unreachable, result.Status);
     }
 
-    /// <summary>
-    /// Every step fails, cleanup included. <c>CreateKey</c> creates the key server-side and then
-    /// throws parsing the response, so no key id ever comes back — which is why <c>RunAsync</c>
-    /// claims the key for cleanup before the call rather than on the id. Without that, every run
-    /// would leave a key behind in the lab's persistent volume with no red step to say so.
-    /// </summary>
     [Fact]
-    public async Task RoundTrip_Documents_Keys_Are_Not_Implemented()
+    public async Task RoundTrip_Every_Step_Succeeds()
     {
-        List<DemoStep> steps = [];
-
-        await foreach (DemoStep step in new KeyVaultKeysDemo(this.factory).RunAsync(TestContext.Current.CancellationToken))
-        {
-            steps.Add(step);
-        }
+        List<DemoStep> steps = await RunAsync(new KeyVaultKeysDemo(this.factory));
 
         Assert.Collection(
             steps,
@@ -100,61 +80,101 @@ public sealed class AzureKeyVaultKeysTests : IAsyncLifetime
             s => Assert.Equal("Decrypt", s.Title),
             s => Assert.Equal("DeleteKey — cleanup", s.Title));
 
-        Assert.All(steps, s => Assert.False(s.Succeeded, $"{s.Title} succeeded — floci-az may have shipped Key Vault Keys; update this test and docs/BLAZOR-PLAN.md §14."));
-        // The trailing-slash GET keys/ read as a get of a key named "" — the list misroute 0.13.0
-        // fixed on the Secrets plane but not here (§14).
-        Assert.Contains("was not found", steps.Single(s => s.Title == "ListKeys — before").Error, StringComparison.Ordinal);
-        Assert.Contains("Skipped", steps.Single(s => s.Title == "Encrypt").Error);
-        Assert.Contains("Skipped", steps.Single(s => s.Title == "Decrypt").Error);
-
-        // Cleanup stays red — the delete's reply carries the same null attributes as CreateKey's —
-        // but the purge still runs, so the key this run created is actually gone.
-        Assert.Contains("'Null'", steps[^1].Error, StringComparison.Ordinal);
-        Assert.Contains("Deleted and purged", steps[^1].Error, StringComparison.Ordinal);
-
-        string name = Regex.Match(steps.Single(s => s.Title == "CreateKey").Request!, "keys/(flocilab-kvkey-[0-9a-f]{32})/create").Groups[1].Value;
-        await this.AssertKeyGoneAsync(name);
+        Assert.All(steps, s => Assert.True(s.Succeeded, $"{s.Title}: {s.Error}"));
+        Assert.Contains("Hello from FlociLab.", steps.Single(s => s.Title == "Decrypt").Response);
     }
 
     /// <summary>
-    /// The comparison page deletes only a key whose id came back from CreateKeyAsync, so a create
-    /// that lands and then fails to parse would leak a key per run. The capability undoes it by
-    /// name before rethrowing, and the create's own failure is what the caller still sees.
+    /// Unique per-run key names plus delete-and-purge cleanup make re-runs idempotent; a second run
+    /// against the same container is how that is proved rather than asserted. Purge matters: a
+    /// soft-deleted key keeps its name reserved, so a cleanup that stopped at delete would leave the
+    /// deleted-keys list growing by one per run.
     /// </summary>
     [Fact]
-    public async Task Capability_CreateKey_That_Fails_Leaves_No_Key_Behind()
+    public async Task RoundTrip_Runs_Twice_And_Leaves_No_Key_Behind()
     {
+        CancellationToken ct = TestContext.Current.CancellationToken;
+        KeyClient client = this.factory.Create();
+        List<string> before = await ListKeyNamesAsync(client.GetPropertiesOfKeysAsync(ct));
+        List<string> deletedBefore = await ListDeletedKeyNamesAsync(client, ct);
+
+        foreach (int run in Enumerable.Range(0, 2))
+        {
+            List<DemoStep> steps = await RunAsync(new KeyVaultKeysDemo(this.factory));
+
+            Assert.All(steps, s => Assert.True(s.Succeeded, $"run {run}, {s.Title}: {s.Error}"));
+        }
+
+        Assert.Equal(before.Order(), (await ListKeyNamesAsync(client.GetPropertiesOfKeysAsync(ct))).Order());
+        Assert.Equal(deletedBefore.Order(), (await ListDeletedKeyNamesAsync(client, ct)).Order());
+    }
+
+    /// <summary>The capability the key-management comparison page consumes (plan §8).</summary>
+    [Fact]
+    public async Task KeyManagement_Capability_RoundTrips()
+    {
+        KeyVaultKeyManagement keyManagement = new(this.factory);
+        CancellationToken ct = TestContext.Current.CancellationToken;
         string name = $"flocilab-cap-{Guid.NewGuid():N}";
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            async () => await new KeyVaultKeyManagement(this.factory).CreateKeyAsync(name, TestContext.Current.CancellationToken));
+        string keyId = await keyManagement.CreateKeyAsync(name, ct);
+
+        try
+        {
+            // Key Vault's create returns a versioned id and its list returns unversioned ones, so
+            // the listing is matched by name — the same rule the comparison page uses.
+            Assert.Contains(name, (await keyManagement.ListKeysAsync(ct)).Select(k => k.Name));
+
+            byte[] plaintext = "capability round-trip"u8.ToArray();
+            byte[] ciphertext = await keyManagement.EncryptAsync(keyId, plaintext, ct);
+
+            Assert.NotEqual(plaintext, ciphertext);
+            Assert.Equal(plaintext, await keyManagement.DecryptAsync(keyId, ciphertext, ct));
+        }
+        finally
+        {
+            await keyManagement.DeleteKeyAsync(keyId, CancellationToken.None);
+        }
 
         await this.AssertKeyGoneAsync(name);
     }
 
     /// <summary>
-    /// floci-az 0.13.0 added real <c>/keys</c> routing (confirmed 2026-09-28) — this used to assert
-    /// the plain 404 that meant the route did not exist at all. Now the request reaches floci-az's
-    /// handler and is accepted server-side, but the response carries the same unset-timestamp bug
-    /// Key Vault Secrets had before 0.13.0 fixed it there: <c>attributes.nbf</c>/<c>attributes.exp</c>
-    /// come back as JSON <c>null</c> rather than omitted, and the SDK's model requires a number. This
-    /// is now the tripwire for the day floci-az fixes the Keys plane the same way it already fixed
-    /// Secrets.
+    /// The protection added while 0.13.0's create landed server-side and then failed to parse: a
+    /// create that fails after it may have landed is undone by name, so the comparison page cannot
+    /// leak a key. Still worth pinning on a working emulator — a name that is already taken fails the
+    /// create with an answered 409, and that must not purge the key the earlier call made.
     /// </summary>
     [Fact]
-    public async Task CreateKey_Throws_Because_Nbf_And_Exp_Are_Null_Not_Omitted()
+    public async Task Capability_CreateKey_Conflict_Leaves_The_Existing_Key_Alone()
     {
-        KeyClient client = this.factory.Create();
+        KeyVaultKeyManagement keyManagement = new(this.factory);
+        CancellationToken ct = TestContext.Current.CancellationToken;
+        string name = $"flocilab-dup-{Guid.NewGuid():N}";
 
-        InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(
-            async () => await client.CreateKeyAsync($"flocilab-probe-{Guid.NewGuid():N}", KeyType.Rsa, cancellationToken: TestContext.Current.CancellationToken));
+        string keyId = await keyManagement.CreateKeyAsync(name, ct);
 
-        Assert.Contains("'Number'", ex.Message, StringComparison.Ordinal);
-        Assert.Contains("'Null'", ex.Message, StringComparison.Ordinal);
+        try
+        {
+            KeyClient client = this.factory.Create();
+            await client.StartDeleteKeyAsync(name, ct);
+
+            // A soft-deleted name is reserved until purged, so a second create answers 409.
+            await Assert.ThrowsAnyAsync<Exception>(async () => await keyManagement.CreateKeyAsync(name, ct));
+
+            DeletedKey stillThere = await client.GetDeletedKeyAsync(name, ct);
+            Assert.Equal(name, stillThere.Name);
+        }
+        finally
+        {
+            KeyClient client = this.factory.Create();
+            await client.PurgeDeletedKeyAsync(name, CancellationToken.None);
+        }
+
+        await this.AssertKeyGoneAsync(name);
     }
 
-    // Neither live nor soft-deleted: GetKey and GetDeletedKey both answer 404. Either one parsing a
-    // body instead would throw the null-attribute InvalidOperationException, failing the assert.
+    // Neither live nor soft-deleted: GetKey and GetDeletedKey both answer 404.
     private async Task AssertKeyGoneAsync(string name)
     {
         KeyClient client = this.factory.Create();
@@ -165,6 +185,42 @@ public sealed class AzureKeyVaultKeysTests : IAsyncLifetime
 
         RequestFailedException deleted = await Assert.ThrowsAsync<RequestFailedException>(async () => await client.GetDeletedKeyAsync(name, ct));
         Assert.Equal(404, deleted.Status);
+    }
+
+    private static async Task<List<DemoStep>> RunAsync(KeyVaultKeysDemo demo)
+    {
+        List<DemoStep> steps = [];
+
+        await foreach (DemoStep step in demo.RunAsync(TestContext.Current.CancellationToken))
+        {
+            steps.Add(step);
+        }
+
+        return steps;
+    }
+
+    private static async Task<List<string>> ListKeyNamesAsync(AsyncPageable<KeyProperties> keys)
+    {
+        List<string> names = [];
+
+        await foreach (KeyProperties key in keys)
+        {
+            names.Add(key.Name);
+        }
+
+        return names;
+    }
+
+    private static async Task<List<string>> ListDeletedKeyNamesAsync(KeyClient client, CancellationToken ct)
+    {
+        List<string> names = [];
+
+        await foreach (DeletedKey key in client.GetDeletedKeysAsync(ct))
+        {
+            names.Add(key.Name);
+        }
+
+        return names;
     }
 
     private static AzureEndpoints EndpointsFor(string endpoint)

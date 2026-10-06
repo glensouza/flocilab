@@ -14,15 +14,16 @@
     packages and this lab allows exactly one cloud SDK package per sample.
 </p>
 
-<p class="lede">
-    <strong>Every step below fails against floci-az today, for two separate reasons.</strong> The
-    emulator routes <code>/keys</code>, but listing 404s: the SDK requests <code>GET keys/</code> (a
-    trailing slash), and floci-az reads the empty segment after it as a key name. And it creates
-    the key, but sends <code>attributes.nbf</code>/<code>attributes.exp</code> as JSON
-    <code>null</code> when unset instead of omitting them, and the SDK's model insists on a number
-    there, so the create and delete responses cannot be read. Real Key Vault would do neither. This page still runs the full intended round trip and shows exactly what floci-az says,
-    so it becomes the tripwire for the day the Keys plane is fixed upstream.
-</p>
+@if (this.Factory.UseEmulator)
+{
+    @* Only true of floci-az; against real Key Vault the key id already names the vault to call. *@
+    <p class="lede">
+        One emulator-specific move, in <code>KeyVaultKeysClientFactory</code>: floci-az reports every
+        key id on the production host (<code>https://{account}.vault.azure.net/keys/…</code>), so
+        Encrypt and Decrypt keep the id's path and send it to the emulator instead. Built from the id
+        as-is, the crypto client would send this run's bearer token to real Azure.
+    </p>
+}
 
 <dl class="facts">
     <dt>Target</dt>
