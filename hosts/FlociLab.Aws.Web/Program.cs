@@ -20,6 +20,7 @@ using FlociLab.Aws.GlobalAccelerator;
 using FlociLab.Aws.Iam;
 using FlociLab.Aws.IdentityCenter;
 using FlociLab.Aws.Kms;
+using FlociLab.Aws.Lightsail;
 using FlociLab.Aws.Organizations;
 using FlociLab.Aws.Ram;
 using FlociLab.Aws.Route53;
@@ -80,7 +81,8 @@ builder.Services
     .AddAwsOrganizationsDemo()
     .AddAwsRamDemo()
     .AddAwsVerifiedPermissionsDemo()
-    .AddAwsAcmDemo();
+    .AddAwsAcmDemo()
+    .AddAwsLightsailDemo();
 
 WebApplication app = builder.Build();
 

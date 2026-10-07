@@ -1,0 +1,142 @@
+@page "/aws/lightsail"
+@inject LightsailDemo Demo
+@inject LightsailClientFactory Factory
+@implements IDisposable
+
+<PageTitle>Amazon Lightsail — FlociLab</PageTitle>
+
+<h1>Amazon Lightsail</h1>
+
+<p class="lede">
+    Read the blueprint and bundle catalog, create an instance, stop and start it, open a port,
+    give it a static IP, attach a disk and add a key pair, then ask for a duplicate name, a
+    blueprint that does not exist and a snapshot, and delete everything. floci keeps Lightsail
+    as bookkeeping: every operation reports "completed locally" and no virtual machine ever
+    starts, so the public address is a documentation-range placeholder. Each step shows what
+    floci answered, including what it never refuses and what it cannot do. This is
+    <code>AWSSDK.Lightsail</code> used exactly as production would use it.
+</p>
+
+<dl class="facts">
+    <dt>Target</dt>
+    <dd class="target @(this.Factory.UseEmulator ? "target-emulator" : "target-real")">
+        @(this.Factory.UseEmulator ? "floci emulator" : "REAL AWS — this creates instances, disks, static IPs and key pairs in this account, then deletes them")
+    </dd>
+    <dt>Endpoint</dt>
+    <dd><code>@this.Factory.ServiceUrl</code></dd>
+    <dt>Package</dt>
+    <dd><code>AWSSDK.Lightsail</code></dd>
+</dl>
+
+<div class="toolbar">
+    <button class="button" @onclick="this.RunAsync" disabled="@(this.running || !this.RendererInfo.IsInteractive)">
+        @(this.running ? "Running…" : "Run the round-trip")
+    </button>
+    @if (!this.RendererInfo.IsInteractive)
+    {
+        <span class="note">Waiting for the interactive circuit…</span>
+    }
+    else if (this.finishedAt is not null)
+    {
+        <span class="note">
+            @this.steps.Count step(s), @(this.steps.Count(s => !s.Succeeded)) failed —
+            @this.finishedAt.Value.ToLocalTime().ToString("HH:mm:ss")
+        </span>
+    }
+</div>
+
+@if (this.steps.Count == 0 && !this.running)
+{
+    <p class="empty">
+        Nothing has run yet. Every step below will show the wire-level request and what floci
+        actually answered, including the failures.
+    </p>
+}
+
+@foreach (DemoStep step in this.steps)
+{
+    <section class="step @(step.Succeeded ? "step-ok" : "step-failed")">
+        <h2>
+            @step.Title
+            <span class="badge @(step.Succeeded ? "badge-ok" : "badge-error")">
+                @(step.Succeeded ? "Ok" : "Failed")
+            </span>
+        </h2>
+
+        @if (step.Request is not null)
+        {
+            <h3>Request</h3>
+            <pre>@step.Request</pre>
+        }
+
+        @if (step.Response is not null)
+        {
+            <h3>Response</h3>
+            <pre>@step.Response</pre>
+        }
+
+        @if (step.Error is not null)
+        {
+            <h3>Error</h3>
+            <pre class="error">@step.Error</pre>
+        }
+    </section>
+}
+
+@code {
+    private readonly List<DemoStep> steps = [];
+    private readonly CancellationTokenSource cts = new();
+
+    private DateTimeOffset? finishedAt;
+    private bool running;
+    private bool disposed;
+
+    private async Task RunAsync()
+    {
+        if (this.running)
+        {
+            return;
+        }
+
+        this.running = true;
+        this.finishedAt = null;
+        this.steps.Clear();
+        this.StateHasChanged();
+
+        try
+        {
+            // Rendered as they arrive rather than collected first: seeing what the
+            // emulator answers for each step as it happens is most of the point of the page.
+            await foreach (DemoStep step in this.Demo.RunAsync(this.cts.Token))
+            {
+                this.steps.Add(step);
+                this.StateHasChanged();
+            }
+
+            this.finishedAt = DateTimeOffset.Now;
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigated away mid-run. The demo's own finally has already deleted every resource
+            // this run created.
+        }
+        finally
+        {
+            this.running = false;
+
+            if (!this.disposed)
+            {
+                this.StateHasChanged();
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        this.disposed = true;
+
+        // Cancel without disposing: RunAsync may still be inside an SDK call registered on this
+        // token, and disposing underneath it throws ObjectDisposedException instead of cancelling.
+        this.cts.Cancel();
+    }
+}

@@ -53,6 +53,7 @@
     <PackageVersion Include="AWSSDK.GlobalAccelerator" Version="4.0.100.14" />
     <PackageVersion Include="AWSSDK.IdentityManagement" Version="4.0.103.4" />
     <PackageVersion Include="AWSSDK.KeyManagementService" Version="4.0.100.11" />
+    <PackageVersion Include="AWSSDK.Lightsail" Version="4.0.102.1" />
     <PackageVersion Include="AWSSDK.Organizations" Version="4.0.101.6" />
     <PackageVersion Include="AWSSDK.Pipes" Version="4.0.100.12" />
     <PackageVersion Include="AWSSDK.RAM" Version="4.0.100.14" />

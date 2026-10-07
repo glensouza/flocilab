@@ -42,6 +42,7 @@
     <ProjectReference Include="..\..\samples\aws\ram\FlociLab.Aws.Ram.Demo\FlociLab.Aws.Ram.Demo.csproj" />
     <ProjectReference Include="..\..\samples\aws\verifiedpermissions\FlociLab.Aws.VerifiedPermissions.Demo\FlociLab.Aws.VerifiedPermissions.Demo.csproj" />
     <ProjectReference Include="..\..\samples\aws\acm\FlociLab.Aws.Acm.Demo\FlociLab.Aws.Acm.Demo.csproj" />
+    <ProjectReference Include="..\..\samples\aws\lightsail\FlociLab.Aws.Lightsail.Demo\FlociLab.Aws.Lightsail.Demo.csproj" />
     <ProjectReference Include="..\..\samples\aws\route53\FlociLab.Aws.Route53.Demo\FlociLab.Aws.Route53.Demo.csproj" />
     <ProjectReference Include="..\..\samples\aws\route53resolver\FlociLab.Aws.Route53Resolver.Demo\FlociLab.Aws.Route53Resolver.Demo.csproj" />
   </ItemGroup>
