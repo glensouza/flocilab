@@ -20,6 +20,7 @@ using FlociLab.Aws.Iam;
 using FlociLab.Aws.IdentityCenter;
 using FlociLab.Aws.Kms;
 using FlociLab.Aws.Organizations;
+using FlociLab.Aws.Ram;
 using FlociLab.Aws.Route53;
 using FlociLab.Aws.Route53Resolver;
 using FlociLab.Aws.S3;
@@ -91,6 +92,7 @@ builder.Services
     .AddAwsIdentityCenterDemo()
     .AddAwsAccessAnalyzerDemo()
     .AddAwsOrganizationsDemo()
+    .AddAwsRamDemo()
     .AddAzureBlobDemo()
     .AddAzureQueueDemo()
     .AddAzureServiceBusDemo()
