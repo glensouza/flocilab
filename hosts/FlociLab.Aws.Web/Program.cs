@@ -31,6 +31,7 @@ using FlociLab.Aws.Ssm;
 using FlociLab.Aws.Sts;
 using FlociLab.Aws.StepFunctions;
 using FlociLab.Aws.Swf;
+using FlociLab.Aws.VerifiedPermissions;
 using FlociLab.Aws.Web.Components;
 using FlociLab.Core;
 using FlociLab.Core.Coverage;
@@ -76,7 +77,8 @@ builder.Services
     .AddAwsAccessAnalyzerDemo()
     .AddAwsAccountDemo()
     .AddAwsOrganizationsDemo()
-    .AddAwsRamDemo();
+    .AddAwsRamDemo()
+    .AddAwsVerifiedPermissionsDemo();
 
 WebApplication app = builder.Build();
 

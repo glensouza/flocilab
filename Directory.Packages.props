@@ -68,6 +68,7 @@
     <PackageVersion Include="AWSSDK.SQS" Version="4.0.100.11" />
     <PackageVersion Include="AWSSDK.SSOAdmin" Version="4.0.103" />
     <PackageVersion Include="AWSSDK.StepFunctions" Version="4.0.100.13" />
+    <PackageVersion Include="AWSSDK.VerifiedPermissions" Version="4.0.100.14" />
     <PackageVersion Include="Azure.Identity" Version="1.21.0" />
     <PackageVersion Include="Azure.Messaging.ServiceBus" Version="7.20.2" />
     <PackageVersion Include="Azure.Security.KeyVault.Keys" Version="4.10.0" />

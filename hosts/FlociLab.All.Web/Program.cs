@@ -32,6 +32,7 @@ using FlociLab.Aws.Ssm;
 using FlociLab.Aws.Sts;
 using FlociLab.Aws.StepFunctions;
 using FlociLab.Aws.Swf;
+using FlociLab.Aws.VerifiedPermissions;
 using FlociLab.Azure;
 using FlociLab.Azure.Blob;
 using FlociLab.Azure.CosmosDb;
@@ -95,6 +96,7 @@ builder.Services
     .AddAwsAccountDemo()
     .AddAwsOrganizationsDemo()
     .AddAwsRamDemo()
+    .AddAwsVerifiedPermissionsDemo()
     .AddAzureBlobDemo()
     .AddAzureQueueDemo()
     .AddAzureServiceBusDemo()
