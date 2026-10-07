@@ -35,6 +35,7 @@
   -->
   <ItemGroup>
     <PackageVersion Include="AWSSDK.AccessAnalyzer" Version="4.0.100.14" />
+    <PackageVersion Include="AWSSDK.Account" Version="4.0.101.7" />
     <PackageVersion Include="AWSSDK.APIGateway" Version="4.0.101" />
     <PackageVersion Include="AWSSDK.ApiGatewayV2" Version="4.0.100.14" />
     <PackageVersion Include="AWSSDK.ApiGatewayManagementApi" Version="4.0.100.15" />

@@ -1,6 +1,7 @@
 using System.Reflection;
 using FlociLab.All.Web.Components;
 using FlociLab.Aws.AccessAnalyzer;
+using FlociLab.Aws.Account;
 using FlociLab.Aws.ApiGatewayRest;
 using FlociLab.Aws.ApiGatewayV2;
 using FlociLab.Aws.AppSync;
@@ -91,6 +92,7 @@ builder.Services
     .AddAwsStsDemo()
     .AddAwsIdentityCenterDemo()
     .AddAwsAccessAnalyzerDemo()
+    .AddAwsAccountDemo()
     .AddAwsOrganizationsDemo()
     .AddAwsRamDemo()
     .AddAzureBlobDemo()
