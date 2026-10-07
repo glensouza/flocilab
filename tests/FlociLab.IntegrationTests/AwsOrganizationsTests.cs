@@ -69,9 +69,9 @@ public sealed class AwsOrganizationsTests : IAsyncLifetime
             s => Assert.Equal("ListRoots", s.Title),
             s =>
             {
-                // floci switches SCPs on for a new root; AWS documents a new root as having none.
+                // A new root has no policy types, so the run has to switch SCPs on (floci 2.2.0; 2.1.0 did it for you).
                 Assert.Equal("EnablePolicyType", s.Title);
-                Assert.Contains(nameof(PolicyTypeAlreadyEnabledException), s.Response);
+                Assert.Contains("SCPs enabled", s.Response);
             },
             s => Assert.Equal("CreateOrganizationalUnit", s.Title),
             s => Assert.Equal("CreateOrganizationalUnit — refused as a duplicate", s.Title),
@@ -130,6 +130,10 @@ public sealed class AwsOrganizationsTests : IAsyncLifetime
 
         try
         {
+            // The run will not switch on policy types for an organization it did not create.
+            string existingRootId = (await client.ListRootsAsync(new ListRootsRequest(), ct)).Roots.Single().Id;
+            await client.EnablePolicyTypeAsync(new EnablePolicyTypeRequest { RootId = existingRootId, PolicyType = PolicyType.SERVICE_CONTROL_POLICY }, ct);
+
             List<DemoStep> steps = [];
 
             await foreach (DemoStep step in new OrganizationsDemo(this.factory).RunAsync(ct))
@@ -201,13 +205,22 @@ public sealed class AwsOrganizationsTests : IAsyncLifetime
 
         try
         {
+            string existingRootId = (await client.ListRootsAsync(new ListRootsRequest(), ct)).Roots.Single().Id;
+            await client.EnablePolicyTypeAsync(new EnablePolicyTypeRequest { RootId = existingRootId, PolicyType = PolicyType.SERVICE_CONTROL_POLICY }, ct);
+
+            bool attached = false;
+
             await foreach (DemoStep step in new OrganizationsDemo(this.factory).RunAsync(ct))
             {
                 if (step.Title == "AttachPolicy")
                 {
+                    attached = true;
                     break;
                 }
             }
+
+            // Without this the assertions below pass vacuously when the run stops before it creates anything.
+            Assert.True(attached);
 
             ListRootsResponse roots = await client.ListRootsAsync(new ListRootsRequest(), ct);
             ListOrganizationalUnitsForParentResponse units = await client.ListOrganizationalUnitsForParentAsync(new ListOrganizationalUnitsForParentRequest { ParentId = roots.Roots.Single().Id }, ct);
@@ -236,9 +249,7 @@ public sealed class AwsOrganizationsTests : IAsyncLifetime
 
         try
         {
-            string rootId = (await client.ListRootsAsync(new ListRootsRequest(), ct)).Roots.Single().Id;
-            await client.DisablePolicyTypeAsync(new DisablePolicyTypeRequest { RootId = rootId, PolicyType = PolicyType.SERVICE_CONTROL_POLICY }, ct);
-
+            // A new root already has no policy types (floci 2.2.0), so there is nothing to disable.
             List<DemoStep> steps = [];
 
             await foreach (DemoStep step in new OrganizationsDemo(this.factory).RunAsync(ct))
@@ -259,7 +270,7 @@ public sealed class AwsOrganizationsTests : IAsyncLifetime
     }
 
     /// <summary>
-    /// Tripwire (plan §14). floci 2.1.0 does not validate an SCP document: <c>CreatePolicy</c>
+    /// Tripwire (plan §14). floci 2.2.0 does not validate an SCP document: <c>CreatePolicy</c>
     /// accepts any string as <c>Content</c>, where real AWS answers
     /// <c>MalformedPolicyDocumentException</c>. When this fails, upstream started validating — add
     /// a refused-malformed-policy step to the sample.
@@ -274,6 +285,9 @@ public sealed class AwsOrganizationsTests : IAsyncLifetime
 
         try
         {
+            string rootId = (await client.ListRootsAsync(new ListRootsRequest(), ct)).Roots.Single().Id;
+            await client.EnablePolicyTypeAsync(new EnablePolicyTypeRequest { RootId = rootId, PolicyType = PolicyType.SERVICE_CONTROL_POLICY }, ct);
+
             CreatePolicyResponse created = await client.CreatePolicyAsync(
                 new CreatePolicyRequest
                 {

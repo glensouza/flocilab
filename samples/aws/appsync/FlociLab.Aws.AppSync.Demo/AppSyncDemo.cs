@@ -146,7 +146,9 @@ public sealed class AppSyncDemo(AppSyncClientFactory factory, IHttpClientFactory
                         {
                             if (Stopwatch.GetTimestamp() >= deadline)
                             {
-                                throw new InvalidOperationException($"Schema still PROCESSING after {SchemaPollBudget.TotalSeconds:0} s.");
+                                // floci 2.2.0 loads the schema in a GraphQL sidecar it starts through the Docker socket;
+                                // with no socket it stays PROCESSING forever, which reads as a hang.
+                                throw new InvalidOperationException($"Schema still PROCESSING after {SchemaPollBudget.TotalSeconds:0} s." + (factory.UseEmulator ? " floci starts its GraphQL engine as a sidecar container through the Docker socket — check floci has the socket and can pull floci/floci-sidecar-graphql." : string.Empty));
                             }
 
                             await Task.Delay(SchemaPollDelay, ct).ConfigureAwait(false);
@@ -305,10 +307,10 @@ public sealed class AppSyncDemo(AppSyncClientFactory factory, IHttpClientFactory
     }
 
     /// <summary>
-    /// Says what the query response proves. floci 2.1.0 validates and executes the query against
-    /// the schema and enforces the key, but a field with a resolver still comes back null — so a
-    /// null is reported as that gap rather than as success, and a value as the round trip it is.
-    /// The integration test pins the null, so it fails when upstream ships resolver execution.
+    /// Says what the query response proves. floci 2.2.0 executes resolvers in a GraphQL sidecar;
+    /// 2.1.0 left every resolver field null. A null is still reported as that gap rather than as
+    /// success, because a sidecar that is up but not executing would look identical, and a value
+    /// is reported as the round trip it is.
     /// GraphQL reports validation and resolver faults inside an HTTP 200, so a non-empty
     /// <c>errors</c> array throws here — otherwise a template real AppSync rejects would read as Ok.
     /// </summary>

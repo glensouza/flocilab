@@ -1,4 +1,6 @@
 using System.Text.RegularExpressions;
+using Amazon.IdentityManagement;
+using Amazon.IdentityManagement.Model;
 using Amazon.Runtime;
 using Amazon.SecurityToken;
 using Amazon.SecurityToken.Model;
@@ -57,10 +59,12 @@ public sealed class AwsStsTests : IAsyncLifetime
         Assert.Collection(
             steps,
             s => Assert.Equal("GetCallerIdentity", s.Title),
+            s => Assert.Equal("CreateRole", s.Title),
             s => Assert.Equal("AssumeRole", s.Title),
             s => Assert.Equal("GetCallerIdentity as the assumed role", s.Title),
             s => Assert.Equal("GetSessionToken", s.Title),
-            s => Assert.Equal("GetFederationToken", s.Title));
+            s => Assert.Equal("GetFederationToken", s.Title),
+            s => Assert.Equal("DeleteRole — cleanup", s.Title));
 
         Assert.All(steps, s => Assert.True(s.Succeeded, $"{s.Title}: {s.Error}"));
         Assert.Contains(":assumed-role/flocilab-sts-role-", steps.Single(s => s.Title == "GetCallerIdentity as the assumed role").Response);
@@ -98,54 +102,88 @@ public sealed class AwsStsTests : IAsyncLifetime
                 steps.Add(step);
             }
 
-            Assert.Equal(5, steps.Count);
+            Assert.Equal(7, steps.Count);
             Assert.All(steps, s => Assert.True(s.Succeeded, $"run {i}, {s.Title}: {s.Error}"));
         }
     }
 
     /// <summary>
-    /// Tripwire, not a sample assertion: floci 2.1.0 hands credentials to a role that was never
-    /// created, where real STS answers AccessDenied (docs/BLAZOR-PLAN.md §14). When this starts
-    /// failing, floci began validating the role — and the demo's AssumeRole step now needs a real
-    /// role created first.
+    /// Since floci 2.2.0 a role that was never created is refused, as real STS always has done
+    /// (docs/BLAZOR-PLAN.md §14); 2.1.0 handed out credentials for any ARN. This is why the demo
+    /// creates a role through IAM first. If this starts failing, floci stopped validating the role.
     /// </summary>
     [Fact]
-    public async Task AssumeRole_Accepts_A_Role_That_Was_Never_Created()
+    public async Task AssumeRole_Refuses_A_Role_That_Was_Never_Created()
     {
         using IAmazonSecurityTokenService client = this.factory.Create();
 
-        AssumeRoleResponse response = await client.AssumeRoleAsync(
-            new AssumeRoleRequest { RoleArn = "arn:aws:iam::000000000000:role/never-created", RoleSessionName = "tripwire" },
-            TestContext.Current.CancellationToken);
+        AmazonServiceException ex = await Assert.ThrowsAnyAsync<AmazonServiceException>(
+            () => client.AssumeRoleAsync(
+                new AssumeRoleRequest { RoleArn = "arn:aws:iam::000000000000:role/never-created", RoleSessionName = "tripwire" },
+                TestContext.Current.CancellationToken));
 
-        Assert.Contains("assumed-role/never-created/", response.AssumedRoleUser.Arn);
+        Assert.Equal("AccessDenied", ex.ErrorCode);
     }
 
     /// <summary>
-    /// Tripwire: floci 2.1.0 accepts a <c>DurationSeconds</c> outside real STS's 900–43200 and
-    /// names every assumed-role session <c>floci-session</c> whatever was asked for
-    /// (docs/BLAZOR-PLAN.md §14). The demo's identity check matches on the role, deliberately not
-    /// the session name, because of the second. When this fails, revisit both.
+    /// floci 2.2.0 validates <c>DurationSeconds</c> against real STS's 900–43200 bound; 2.1.0
+    /// accepted 1 and 99999 (docs/BLAZOR-PLAN.md §14). The request is refused before the role is
+    /// looked at, so none is needed.
     /// </summary>
     [Fact]
-    public async Task AssumeRole_Ignores_Duration_Bounds_And_The_Session_Name()
+    public async Task AssumeRole_Refuses_A_Duration_Below_The_Minimum()
     {
-        CancellationToken ct = TestContext.Current.CancellationToken;
         using IAmazonSecurityTokenService client = this.factory.Create();
 
         // The SDK's analyzer rejects a literal below 900, which is the point: this test exists to
-        // send one and watch floci accept it.
+        // send one and watch floci refuse it.
 #pragma warning disable SecurityTokenService1003
-        AssumeRoleResponse response = await client.AssumeRoleAsync(
-            new AssumeRoleRequest { RoleArn = "arn:aws:iam::000000000000:role/tripwire", RoleSessionName = "asked-for", DurationSeconds = 1 },
-            ct);
+        AmazonServiceException ex = await Assert.ThrowsAnyAsync<AmazonServiceException>(
+            () => client.AssumeRoleAsync(
+                new AssumeRoleRequest { RoleArn = "arn:aws:iam::000000000000:role/tripwire", RoleSessionName = "asked-for", DurationSeconds = 1 },
+                TestContext.Current.CancellationToken));
 #pragma warning restore SecurityTokenService1003
 
-        using IAmazonSecurityTokenService assumedClient = this.factory.Create(
-            new SessionAWSCredentials(response.Credentials.AccessKeyId, response.Credentials.SecretAccessKey, response.Credentials.SessionToken));
-        GetCallerIdentityResponse identity = await assumedClient.GetCallerIdentityAsync(new GetCallerIdentityRequest(), ct);
+        Assert.Contains("durationSeconds", ex.Message);
+    }
 
-        Assert.EndsWith(":assumed-role/tripwire/floci-session", identity.Arn);
+    /// <summary>
+    /// What floci 2.2.0 reports as the session name once the role is real. 2.1.0 named every
+    /// session <c>floci-session</c>; the demo's identity check matches on the role only, because
+    /// that is the part both builds agree on.
+    /// </summary>
+    [Fact]
+    public async Task AssumeRole_Reports_The_Session_Name_It_Was_Asked_For()
+    {
+        CancellationToken ct = TestContext.Current.CancellationToken;
+        string roleName = $"flocilab-sts-session-{Guid.NewGuid():N}";
+        using IAmazonIdentityManagementService iam = this.factory.CreateIam();
+        using IAmazonSecurityTokenService client = this.factory.Create();
+
+        string account = (await client.GetCallerIdentityAsync(new GetCallerIdentityRequest(), ct)).Account;
+
+        CreateRoleResponse role = await iam.CreateRoleAsync(
+            new CreateRoleRequest
+            {
+                RoleName = roleName,
+                AssumeRolePolicyDocument = $$"""{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"AWS":"arn:aws:iam::{{account}}:root"},"Action":"sts:AssumeRole"}]}""",
+            }, ct);
+
+        try
+        {
+            AssumeRoleResponse response = await client.AssumeRoleAsync(
+                new AssumeRoleRequest { RoleArn = role.Role.Arn, RoleSessionName = "asked-for", DurationSeconds = 900 }, ct);
+
+            using IAmazonSecurityTokenService assumedClient = this.factory.Create(
+                new SessionAWSCredentials(response.Credentials.AccessKeyId, response.Credentials.SecretAccessKey, response.Credentials.SessionToken));
+            GetCallerIdentityResponse identity = await assumedClient.GetCallerIdentityAsync(new GetCallerIdentityRequest(), ct);
+
+            Assert.EndsWith($":assumed-role/{roleName}/asked-for", identity.Arn);
+        }
+        finally
+        {
+            await iam.DeleteRoleAsync(new DeleteRoleRequest { RoleName = roleName }, CancellationToken.None);
+        }
     }
 
     /// <summary>

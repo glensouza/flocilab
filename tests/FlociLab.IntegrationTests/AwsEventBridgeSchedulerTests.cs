@@ -151,23 +151,21 @@ public sealed class AwsEventBridgeSchedulerTests : IAsyncLifetime
     }
 
     /// <summary>
-    /// floci accepts a <c>ScheduleExpression</c> that is not a <c>rate</c>, <c>cron</c> or
-    /// <c>at</c> expression at all, and stores it verbatim; real EventBridge Scheduler answers
-    /// <c>ValidationException</c>. That matters because it is silent — a typo in a cron expression
-    /// round-trips perfectly on the emulator and fails at deploy — so it is pinned here rather
-    /// than only written down (docs/BLAZOR-PLAN.md §14). The day floci starts validating, this
-    /// test fails and the register row comes out.
+    /// floci 2.2.0 refuses a <c>ScheduleExpression</c> that is not a <c>rate</c>, <c>cron</c> or
+    /// <c>at</c> expression with <c>ValidationException</c>, as real EventBridge Scheduler does.
+    /// 1.7.0 and 2.1.0 stored it verbatim — silent, because a typo in a cron expression
+    /// round-tripped perfectly on the emulator and failed at deploy (docs/BLAZOR-PLAN.md §14).
+    /// Pinned so a regression to silent acceptance fails loudly.
     /// </summary>
     [Fact]
-    public async Task Floci_Accepts_A_Malformed_ScheduleExpression()
+    public async Task Floci_Refuses_A_Malformed_ScheduleExpression()
     {
         using IAmazonScheduler client = this.factory.Create();
         CancellationToken ct = TestContext.Current.CancellationToken;
         string name = $"flocilab-schedule-malformed-{Guid.NewGuid():N}";
 
-        try
-        {
-            await client.CreateScheduleAsync(
+        ValidationException ex = await Assert.ThrowsAsync<ValidationException>(
+            () => client.CreateScheduleAsync(
                 new CreateScheduleRequest
                 {
                     Name = name,
@@ -178,16 +176,12 @@ public sealed class AwsEventBridgeSchedulerTests : IAsyncLifetime
                         Arn = "arn:aws:sqs:us-east-1:000000000000:flocilab-scheduler-target",
                         RoleArn = "arn:aws:iam::000000000000:role/flocilab-scheduler-role",
                     },
-                }, ct);
+                }, ct));
 
-            GetScheduleResponse stored = await client.GetScheduleAsync(new GetScheduleRequest { Name = name }, ct);
+        Assert.False(string.IsNullOrEmpty(ex.Message));
 
-            Assert.Equal("not-a-rate", stored.ScheduleExpression);
-        }
-        finally
-        {
-            await client.DeleteScheduleAsync(new DeleteScheduleRequest { Name = name }, CancellationToken.None);
-        }
+        // Refused means nothing was stored, so there is nothing to clean up.
+        await Assert.ThrowsAsync<ResourceNotFoundException>(() => client.GetScheduleAsync(new GetScheduleRequest { Name = name }, ct));
     }
 
     /// <summary>

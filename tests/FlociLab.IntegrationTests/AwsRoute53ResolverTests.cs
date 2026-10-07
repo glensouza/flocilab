@@ -141,29 +141,36 @@ public sealed class AwsRoute53ResolverTests : IAsyncLifetime
     }
 
     /// <summary>
-    /// Tripwire (plan §14). floci 2.1.0 reads the endpoint's IPs from <c>IpAddressRequests</c>,
-    /// not the <c>IpAddresses</c> the real API and every SDK send, so no SDK can create a resolver
-    /// endpoint against it. When this starts failing, upstream fixed it: add the endpoint steps
-    /// and a FORWARD rule to the sample.
+    /// floci 2.2.0 reads the endpoint's IPs from <c>IpAddresses</c>, as the real API and every SDK
+    /// send them; 2.1.0 demanded <c>IpAddressRequests</c>, so no SDK could create a resolver
+    /// endpoint (plan §14). The sample does not yet use endpoints or FORWARD rules.
     /// </summary>
     [Fact]
-    public async Task Tripwire_CreateResolverEndpoint_Is_Refused_By_Floci()
+    public async Task CreateResolverEndpoint_Works_Through_The_Sdk()
     {
         using IAmazonRoute53Resolver client = this.factory.Create();
+        CancellationToken ct = TestContext.Current.CancellationToken;
 
-        AmazonServiceException ex = await Assert.ThrowsAnyAsync<AmazonServiceException>(async () =>
-            await client.CreateResolverEndpointAsync(
-                new CreateResolverEndpointRequest
-                {
-                    CreatorRequestId = Guid.NewGuid().ToString("N"),
-                    Name = "tripwire",
-                    Direction = ResolverEndpointDirection.OUTBOUND,
-                    SecurityGroupIds = ["sg-0123456789abcdef0"],
-                    IpAddresses = [new IpAddressRequest { SubnetId = "subnet-1" }, new IpAddressRequest { SubnetId = "subnet-2" }],
-                },
-                TestContext.Current.CancellationToken));
+        CreateResolverEndpointResponse created = await client.CreateResolverEndpointAsync(
+            new CreateResolverEndpointRequest
+            {
+                CreatorRequestId = Guid.NewGuid().ToString("N"),
+                Name = "endpoint-check",
+                Direction = ResolverEndpointDirection.OUTBOUND,
+                SecurityGroupIds = ["sg-0123456789abcdef0"],
+                IpAddresses = [new IpAddressRequest { SubnetId = "subnet-1" }, new IpAddressRequest { SubnetId = "subnet-2" }],
+            },
+            ct);
 
-        Assert.Contains("IpAddressRequests", ex.Message, StringComparison.Ordinal);
+        try
+        {
+            Assert.False(string.IsNullOrEmpty(created.ResolverEndpoint.Id));
+            Assert.Equal(ResolverEndpointDirection.OUTBOUND, created.ResolverEndpoint.Direction);
+        }
+        finally
+        {
+            await client.DeleteResolverEndpointAsync(new DeleteResolverEndpointRequest { ResolverEndpointId = created.ResolverEndpoint.Id }, CancellationToken.None);
+        }
     }
 
     /// <summary>

@@ -2,6 +2,8 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
+using Amazon.IdentityManagement;
+using Amazon.IdentityManagement.Model;
 using Amazon.Runtime;
 using Amazon.SecurityToken;
 using Amazon.SecurityToken.Model;
@@ -12,9 +14,9 @@ namespace FlociLab.Aws.Sts;
 /// <summary>
 /// AWS STS against floci. Ordinary AWSSDK.SecurityToken code — the only emulator-aware line in the
 /// sample is in <see cref="StsClientFactory"/>. STS is the odd service in this repo in that it
-/// creates nothing that persists (every credential just expires), so <see cref="RunAsync"/> has no
-/// cleanup and no resource to leak; its round trip is the exchange itself — who am I, become a
-/// role, prove it by signing with what came back.
+/// persists nothing of its own (every credential just expires); its round trip is the exchange
+/// itself — who am I, become a role, prove it by signing with what came back. The one thing it
+/// creates is the role to become, through IAM, and <see cref="RunAsync"/> deletes that again.
 /// </summary>
 public sealed class StsDemo(StsClientFactory factory) : IServiceDemo
 {
@@ -27,6 +29,9 @@ public sealed class StsDemo(StsClientFactory factory) : IServiceDemo
     public string Category => "Security";
 
     public string Route => "/aws/sts";
+
+    // Long enough for a new role to propagate on real AWS (usually under ten seconds); unused on floci.
+    private static readonly TimeSpan RolePropagationBudget = TimeSpan.FromSeconds(20);
 
     /// <summary>
     /// GetCallerIdentity: it needs no permission on real AWS, takes no input and changes nothing,
@@ -74,102 +79,151 @@ public sealed class StsDemo(StsClientFactory factory) : IServiceDemo
                 return $"HTTP {(int)response.HttpStatusCode} — Account: {account}, Arn: {StsResponse.Require(response.Arn, "GetCallerIdentity", "Arn")}";
             }).ConfigureAwait(false);
 
-        // Every later step needs the account id to build the role ARN, so a failed first step ends
-        // the run rather than inventing one.
-        if (account is null)
+        // Created below, so cleanup has to know whether the request was ever issued rather than
+        // whether it answered (docs/BLAZOR-PLAN.md §14, the cleanup corollary).
+        bool roleCreated = false;
+        DemoStep? deleteRoleStep = null;
+
+        using IAmazonIdentityManagementService iam = factory.CreateIam();
+
+        try
         {
-            yield break;
-        }
-
-        // The role is never created. Real STS would refuse this with AccessDenied — the role has to
-        // exist and trust the caller — but floci hands out credentials for any well-formed ARN
-        // (docs/BLAZOR-PLAN.md §14). That is what lets the lab show the exchange without an IAM
-        // detour; against real AWS, swap in a role you can actually assume.
-        string roleArn = $"arn:aws:iam::{account}:role/{roleName}";
-
-        yield return await RunStepAsync(
-            "AssumeRole",
-            $"POST {factory.ServiceUrl}/\nAction=AssumeRole&RoleArn={roleArn}&RoleSessionName={sessionName}&DurationSeconds=900\nclient.AssumeRoleAsync(new AssumeRoleRequest {{ RoleArn = \"{roleArn}\", RoleSessionName = \"{sessionName}\", DurationSeconds = 900 }})",
-            async () =>
+            // Every later step needs the account id to build the role ARN, so a failed first step ends
+            // the run rather than inventing one.
+            if (account is null)
             {
-                AssumeRoleResponse response = await client.AssumeRoleAsync(
-                    new AssumeRoleRequest { RoleArn = roleArn, RoleSessionName = sessionName, DurationSeconds = 900 }, ct).ConfigureAwait(false);
-                Credentials credentials = StsResponse.Require(response.Credentials, "AssumeRole", "Credentials");
-                AssumedRoleUser user = StsResponse.Require(response.AssumedRoleUser, "AssumeRole", "AssumedRoleUser");
-                string described = Describe(credentials);
+                yield break;
+            }
 
-                // Only after Describe has checked every field: credentials missing a session token
-                // must fail here, not resurface as a second, murkier failure in the next step.
-                assumed = credentials;
+            // Real STS has always refused AssumeRole on a role that does not exist or does not trust the
+            // caller, and floci has too since 2.2.0 (docs/BLAZOR-PLAN.md §14), so the role is created
+            // first — through IAM, which is why this sample references a second package. The trust
+            // policy names the account root, which on real AWS means "any principal in this account
+            // that its own identity policy allows to call sts:AssumeRole"; a caller without that
+            // permission is refused.
+            string roleArn = $"arn:aws:iam::{account}:role/{roleName}";
+            string trustPolicy = $$"""{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"AWS":"arn:aws:iam::{{account}}:root"},"Action":"sts:AssumeRole"}]}""";
 
-                return $"HTTP {(int)response.HttpStatusCode} — AssumedRoleUser: {user.Arn}\n{described}";
-            }).ConfigureAwait(false);
-
-        const string AssumedIdentityTitle = "GetCallerIdentity as the assumed role";
-        const string AssumedIdentityRequest = "Action=GetCallerIdentity  (signed with the AssumeRole credentials and their session token)";
-
-        if (assumed is null)
-        {
-            // Said out loud rather than dropped: a run that silently shrank from five steps to four
-            // would hide that the one step proving the exchange never ran — which is exactly what
-            // real AWS does to the made-up role above.
-            yield return DemoStep.Failed(
-                AssumedIdentityTitle,
-                new InvalidOperationException("Skipped — AssumeRole returned no usable credentials, so there is nothing to sign with."),
-                $"POST {factory.ServiceUrl}/\n{AssumedIdentityRequest}");
-        }
-        else
-        {
-            Credentials temporary = assumed;
-
-            // The step that makes the previous one mean something: a client signed with the
-            // temporary credentials has to *be* the assumed role. Checking the ARN rather than
-            // just that the call succeeded is what stops a green step describing an identity the
-            // emulator never actually resolved.
-            yield return await RunStepAsync(
-                AssumedIdentityTitle,
-                $"POST {factory.ServiceUrl}/\nAction=GetCallerIdentity  (signed with {temporary.AccessKeyId} and its session token)\nnew AmazonSecurityTokenServiceClient(new SessionAWSCredentials(accessKeyId, secretAccessKey, sessionToken), config).GetCallerIdentityAsync(new GetCallerIdentityRequest())",
+            DemoStep createRoleStep = await RunStepAsync(
+                "CreateRole",
+                $"POST {factory.ServiceUrl}/\nAction=CreateRole&RoleName={roleName}\niam.CreateRoleAsync(new CreateRoleRequest {{ RoleName = \"{roleName}\", AssumeRolePolicyDocument = <trust policy: the account root may sts:AssumeRole> }})",
                 async () =>
                 {
-                    using IAmazonSecurityTokenService assumedClient = factory.Create(
-                        new SessionAWSCredentials(temporary.AccessKeyId, temporary.SecretAccessKey, temporary.SessionToken));
-                    GetCallerIdentityResponse response = await assumedClient.GetCallerIdentityAsync(new GetCallerIdentityRequest(), ct).ConfigureAwait(false);
-                    string arn = StsResponse.Require(response.Arn, "GetCallerIdentity", "Arn");
+                    // Claimed before the call, not after: if the request lands but the response does
+                    // not come back, the role exists and cleanup has to know about it.
+                    roleCreated = true;
+                    CreateRoleResponse response = await iam.CreateRoleAsync(
+                        new CreateRoleRequest { RoleName = roleName, AssumeRolePolicyDocument = trustPolicy }, ct).ConfigureAwait(false);
+                    string createdArn = StsResponse.Require(response.Role?.Arn, "CreateRole", "Role.Arn");
 
-                    if (!arn.Contains($":assumed-role/{roleName}/", StringComparison.Ordinal))
+                    return $"HTTP {(int)response.HttpStatusCode} — Arn: {createdArn}";
+                }).ConfigureAwait(false);
+
+            yield return createRoleStep;
+
+            // No role, nothing to assume: going on would turn one root cause into three red steps.
+            // The finally still runs, since a create whose response was lost may have landed.
+            if (!createRoleStep.Succeeded)
+            {
+                yield break;
+            }
+
+            yield return await RunStepAsync(
+                "AssumeRole",
+                $"POST {factory.ServiceUrl}/\nAction=AssumeRole&RoleArn={roleArn}&RoleSessionName={sessionName}&DurationSeconds=900\nclient.AssumeRoleAsync(new AssumeRoleRequest {{ RoleArn = \"{roleArn}\", RoleSessionName = \"{sessionName}\", DurationSeconds = 900 }})",
+                async () =>
+                {
+                    AssumeRoleResponse response = await this.AssumeNewRoleAsync(
+                        client, new AssumeRoleRequest { RoleArn = roleArn, RoleSessionName = sessionName, DurationSeconds = 900 }, ct).ConfigureAwait(false);
+                    Credentials credentials = StsResponse.Require(response.Credentials, "AssumeRole", "Credentials");
+                    AssumedRoleUser user = StsResponse.Require(response.AssumedRoleUser, "AssumeRole", "AssumedRoleUser");
+                    string described = Describe(credentials);
+
+                    // Only after Describe has checked every field: credentials missing a session token
+                    // must fail here, not resurface as a second, murkier failure in the next step.
+                    assumed = credentials;
+
+                    return $"HTTP {(int)response.HttpStatusCode} — AssumedRoleUser: {user.Arn}\n{described}";
+                }).ConfigureAwait(false);
+
+            const string AssumedIdentityTitle = "GetCallerIdentity as the assumed role";
+            const string AssumedIdentityRequest = "Action=GetCallerIdentity  (signed with the AssumeRole credentials and their session token)";
+
+            if (assumed is null)
+            {
+                // Said out loud rather than dropped: a run that silently shrank from five steps to four
+                // would hide that the one step proving the exchange never ran.
+                yield return DemoStep.Failed(
+                    AssumedIdentityTitle,
+                    new InvalidOperationException("Skipped — AssumeRole returned no usable credentials, so there is nothing to sign with."),
+                    $"POST {factory.ServiceUrl}/\n{AssumedIdentityRequest}");
+            }
+            else
+            {
+                Credentials temporary = assumed;
+
+                // The step that makes the previous one mean something: a client signed with the
+                // temporary credentials has to *be* the assumed role. Checking the ARN rather than
+                // just that the call succeeded is what stops a green step describing an identity the
+                // emulator never actually resolved.
+                yield return await RunStepAsync(
+                    AssumedIdentityTitle,
+                    $"POST {factory.ServiceUrl}/\nAction=GetCallerIdentity  (signed with {temporary.AccessKeyId} and its session token)\nnew AmazonSecurityTokenServiceClient(new SessionAWSCredentials(accessKeyId, secretAccessKey, sessionToken), config).GetCallerIdentityAsync(new GetCallerIdentityRequest())",
+                    async () =>
                     {
-                        throw new InvalidOperationException($"HTTP {(int)response.HttpStatusCode} — the temporary credentials resolved to {arn}, not to the assumed role {roleName}.");
-                    }
+                        using IAmazonSecurityTokenService assumedClient = factory.Create(
+                            new SessionAWSCredentials(temporary.AccessKeyId, temporary.SecretAccessKey, temporary.SessionToken));
+                        GetCallerIdentityResponse response = await assumedClient.GetCallerIdentityAsync(new GetCallerIdentityRequest(), ct).ConfigureAwait(false);
+                        string arn = StsResponse.Require(response.Arn, "GetCallerIdentity", "Arn");
 
-                    return $"HTTP {(int)response.HttpStatusCode} — Arn: {arn}";
+                        if (!arn.Contains($":assumed-role/{roleName}/", StringComparison.Ordinal))
+                        {
+                            throw new InvalidOperationException($"HTTP {(int)response.HttpStatusCode} — the temporary credentials resolved to {arn}, not to the assumed role {roleName}.");
+                        }
+
+                        return $"HTTP {(int)response.HttpStatusCode} — Arn: {arn}";
+                    }).ConfigureAwait(false);
+            }
+
+            // Both of the next two need long-term IAM user keys on real AWS. Signed with anything
+            // temporary — SSO, an assumed profile role, IMDS or ECS credentials — real STS answers
+            // AccessDenied, so against real AWS these two steps fail unless the SDK chain resolves to
+            // an access key pair (docs/BLAZOR-PLAN.md §14). floci accepts either.
+            yield return await RunStepAsync(
+                "GetSessionToken",
+                $"POST {factory.ServiceUrl}/\nAction=GetSessionToken&DurationSeconds=900\nclient.GetSessionTokenAsync(new GetSessionTokenRequest {{ DurationSeconds = 900 }})",
+                async () =>
+                {
+                    GetSessionTokenResponse response = await client.GetSessionTokenAsync(new GetSessionTokenRequest { DurationSeconds = 900 }, ct).ConfigureAwait(false);
+
+                    return $"HTTP {(int)response.HttpStatusCode}\n{Describe(StsResponse.Require(response.Credentials, "GetSessionToken", "Credentials"))}";
+                }).ConfigureAwait(false);
+
+            yield return await RunStepAsync(
+                "GetFederationToken",
+                $"POST {factory.ServiceUrl}/\nAction=GetFederationToken&Name={sessionName}&DurationSeconds=900\nclient.GetFederationTokenAsync(new GetFederationTokenRequest {{ Name = \"{sessionName}\", DurationSeconds = 900 }})",
+                async () =>
+                {
+                    GetFederationTokenResponse response = await client.GetFederationTokenAsync(
+                        new GetFederationTokenRequest { Name = sessionName, DurationSeconds = 900 }, ct).ConfigureAwait(false);
+                    FederatedUser user = StsResponse.Require(response.FederatedUser, "GetFederationToken", "FederatedUser");
+
+                    return $"HTTP {(int)response.HttpStatusCode} — FederatedUser: {user.Arn}\n{Describe(StsResponse.Require(response.Credentials, "GetFederationToken", "Credentials"))}";
                 }).ConfigureAwait(false);
         }
+        finally
+        {
+            // Runs whether the steps above succeeded, failed, or the consumer stopped enumerating.
+            // The step is yielded below — an iterator may not yield from inside a finally.
+            deleteRoleStep = roleCreated
+                ? await this.DeleteRoleAsync(iam, roleName, ct).ConfigureAwait(false)
+                : null;
+        }
 
-        // Both of the next two need long-term IAM user keys on real AWS. Signed with anything
-        // temporary — SSO, an assumed profile role, IMDS or ECS credentials — real STS answers
-        // AccessDenied, so against real AWS these two steps fail unless the SDK chain resolves to
-        // an access key pair (docs/BLAZOR-PLAN.md §14). floci accepts either.
-        yield return await RunStepAsync(
-            "GetSessionToken",
-            $"POST {factory.ServiceUrl}/\nAction=GetSessionToken&DurationSeconds=900\nclient.GetSessionTokenAsync(new GetSessionTokenRequest {{ DurationSeconds = 900 }})",
-            async () =>
-            {
-                GetSessionTokenResponse response = await client.GetSessionTokenAsync(new GetSessionTokenRequest { DurationSeconds = 900 }, ct).ConfigureAwait(false);
-
-                return $"HTTP {(int)response.HttpStatusCode}\n{Describe(StsResponse.Require(response.Credentials, "GetSessionToken", "Credentials"))}";
-            }).ConfigureAwait(false);
-
-        yield return await RunStepAsync(
-            "GetFederationToken",
-            $"POST {factory.ServiceUrl}/\nAction=GetFederationToken&Name={sessionName}&DurationSeconds=900\nclient.GetFederationTokenAsync(new GetFederationTokenRequest {{ Name = \"{sessionName}\", DurationSeconds = 900 }})",
-            async () =>
-            {
-                GetFederationTokenResponse response = await client.GetFederationTokenAsync(
-                    new GetFederationTokenRequest { Name = sessionName, DurationSeconds = 900 }, ct).ConfigureAwait(false);
-                FederatedUser user = StsResponse.Require(response.FederatedUser, "GetFederationToken", "FederatedUser");
-
-                return $"HTTP {(int)response.HttpStatusCode} — FederatedUser: {user.Arn}\n{Describe(StsResponse.Require(response.Credentials, "GetFederationToken", "Credentials"))}";
-            }).ConfigureAwait(false);
+        if (deleteRoleStep is not null)
+        {
+            yield return deleteRoleStep;
+        }
     }
 
     /// <summary>
@@ -220,6 +274,41 @@ public sealed class StsDemo(StsClientFactory factory) : IServiceDemo
         {
             return DemoStep.Failed(title, ex, request);
         }
+    }
+
+    // IAM is eventually consistent on real AWS: a role created a moment ago is routinely refused
+    // with AccessDenied for several seconds, so there the call is retried for a bounded window.
+    // floci's answer is immediate and final, so against the emulator a refusal is reported as is.
+    private async Task<AssumeRoleResponse> AssumeNewRoleAsync(IAmazonSecurityTokenService client, AssumeRoleRequest request, CancellationToken ct)
+    {
+        long deadline = Stopwatch.GetTimestamp() + (long)(RolePropagationBudget.TotalSeconds * Stopwatch.Frequency);
+
+        while (true)
+        {
+            try
+            {
+                return await client.AssumeRoleAsync(request, ct).ConfigureAwait(false);
+            }
+            catch (AmazonSecurityTokenServiceException ex) when (!factory.UseEmulator && ex.ErrorCode == "AccessDenied" && Stopwatch.GetTimestamp() < deadline)
+            {
+                // Not yet visible to STS — wait and ask again; past the deadline the filter lets it through.
+                await Task.Delay(TimeSpan.FromSeconds(2), ct).ConfigureAwait(false);
+            }
+        }
+    }
+
+    private async Task<DemoStep> DeleteRoleAsync(IAmazonIdentityManagementService iam, string roleName, CancellationToken ct)
+    {
+        string request = $"POST {factory.ServiceUrl}/\nAction=DeleteRole&RoleName={roleName}\niam.DeleteRoleAsync(new DeleteRoleRequest {{ RoleName = \"{roleName}\" }})";
+
+        return await RunStepAsync("DeleteRole — cleanup", request, async () =>
+        {
+            DeleteRoleResponse response = await iam.DeleteRoleAsync(
+                new DeleteRoleRequest { RoleName = roleName }, CancellationToken.None).ConfigureAwait(false);
+
+            return $"HTTP {(int)response.HttpStatusCode} — deleted"
+                + (ct.IsCancellationRequested ? "\n(the run was cancelled; cleanup ran anyway)" : string.Empty);
+        }).ConfigureAwait(false);
     }
 
     /// <summary>

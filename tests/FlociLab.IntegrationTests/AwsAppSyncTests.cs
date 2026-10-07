@@ -1,3 +1,6 @@
+using System.Diagnostics;
+using Amazon.AppSync;
+using Amazon.AppSync.Model;
 using FlociLab.Aws.AppSync;
 using FlociLab.Core;
 using FlociLab.Core.Configuration;
@@ -12,12 +15,27 @@ namespace FlociLab.IntegrationTests;
 /// <summary>
 /// One throwaway floci per class (docs/BLAZOR-PLAN.md §10). Nothing here talks to the emulator the
 /// AppHost runs, so the suite passes on a machine that has never started the lab.
+///
+/// <para>
+/// Since floci 2.2.0 the GraphQL engine is a <i>sidecar</i> container floci starts itself through
+/// the Docker socket, on the first schema it has to load. Without the socket the schema stays
+/// <c>PROCESSING</c> forever. So the socket is mounted, and the sidecar — <c>floci-aws-graphql</c>,
+/// a Docker-host singleton like Service Bus's Artemis — is brought up in
+/// <see cref="InitializeAsync"/> (the first image pull can outlast the demo's own 30 s budget) and
+/// removed afterwards only if this run is what started it.
+/// </para>
 /// </summary>
 public sealed class AwsAppSyncTests : IAsyncLifetime
 {
+    private const string GraphqlSidecarName = "floci-aws-graphql";
+
     // Pinned to :latest so the tripwire tracks the same build the AppHost and the README's Compose
     // stack run, not whatever Testcontainers.Floci defaults to.
-    private readonly FlociContainer floci = new FlociBuilder("floci/floci:latest").Build();
+    private readonly FlociContainer floci = new FlociBuilder("floci/floci:latest")
+        .WithBindMount("/var/run/docker.sock", "/var/run/docker.sock")
+        .Build();
+
+    private bool sidecarCreatedByThisRun;
 
     // The real IHttpClientFactory the demo runs under in a host, from a minimal service provider.
     private readonly ServiceProvider httpServices = new ServiceCollection().AddHttpClient().BuildServiceProvider();
@@ -28,14 +46,50 @@ public sealed class AwsAppSyncTests : IAsyncLifetime
 
     public async ValueTask InitializeAsync()
     {
-        await this.floci.StartAsync(TestContext.Current.CancellationToken);
+        CancellationToken ct = TestContext.Current.CancellationToken;
+
+        await this.floci.StartAsync(ct);
         this.factory = new AppSyncClientFactory(EndpointsFor(this.floci.GetConnectionString()));
+
+        // Set before the warm-up, not after: a warm-up that throws may already have started the
+        // sidecar, and it must still go.
+        this.sidecarCreatedByThisRun = !await SidecarExistsAsync();
+
+        // Loading any schema is what starts the sidecar. Waits far longer than the demo does, so a
+        // slow first pull fails setup with the cause rather than every test with "still PROCESSING".
+        using IAmazonAppSync client = this.factory.Create();
+        CreateGraphqlApiResponse api = await client.CreateGraphqlApiAsync(
+            new CreateGraphqlApiRequest { Name = $"flocilab-warmup-{Guid.NewGuid().ToString("N")[..8]}", AuthenticationType = AuthenticationType.API_KEY }, ct);
+
+        using MemoryStream definition = new("schema { query: Query }\ntype Query { ping: String }"u8.ToArray());
+        await client.StartSchemaCreationAsync(new StartSchemaCreationRequest { ApiId = api.GraphqlApi.ApiId, Definition = definition }, ct);
+
+        long deadline = Stopwatch.GetTimestamp() + (long)(TimeSpan.FromMinutes(3).TotalSeconds * Stopwatch.Frequency);
+        GetSchemaCreationStatusResponse status = await client.GetSchemaCreationStatusAsync(new GetSchemaCreationStatusRequest { ApiId = api.GraphqlApi.ApiId }, ct);
+
+        while (status.Status == SchemaStatus.PROCESSING)
+        {
+            if (Stopwatch.GetTimestamp() >= deadline)
+            {
+                throw new InvalidOperationException("the GraphQL sidecar warm-up never left PROCESSING within 3 minutes — is the Docker socket reachable from floci?");
+            }
+
+            await Task.Delay(TimeSpan.FromSeconds(1), ct);
+            status = await client.GetSchemaCreationStatusAsync(new GetSchemaCreationStatusRequest { ApiId = api.GraphqlApi.ApiId }, ct);
+        }
     }
 
     public async ValueTask DisposeAsync()
     {
         await this.floci.DisposeAsync();
         await this.httpServices.DisposeAsync();
+
+        // floci does not stop the sidecar when it stops itself, so it has to go explicitly — but a
+        // blanket rm would tear a running dev stack's engine out from under it.
+        if (this.sidecarCreatedByThisRun)
+        {
+            await RunDockerAsync($"rm -f {GraphqlSidecarName}");
+        }
     }
 
     [Fact]
@@ -71,13 +125,13 @@ public sealed class AwsAppSyncTests : IAsyncLifetime
     }
 
     /// <summary>
-    /// Tripwire. floci 2.1.0 executes the query and enforces the key, but a field with a resolver
-    /// comes back null (upstream's docs describe resolver execution on main, the released image
-    /// does not do it yet). When this starts failing, resolvers landed — flip the assertion to the
-    /// echoed string and update the §13 note.
+    /// floci 2.2.0 executes a UNIT resolver over a NONE data source through its GraphQL sidecar,
+    /// so the echoed string comes back; 2.1.0 answered <c>{"data":{"echo":null}}</c> for the same
+    /// API (docs/BLAZOR-PLAN.md §14). If this starts failing with a null, the sidecar is not
+    /// executing resolvers.
     /// </summary>
     [Fact]
-    public async Task Query_Resolver_Returns_Null_Until_Upstream_Executes_Resolvers()
+    public async Task Query_Resolver_Executes_And_Echoes_The_Argument()
     {
         List<DemoStep> steps = [];
 
@@ -88,8 +142,8 @@ public sealed class AwsAppSyncTests : IAsyncLifetime
 
         DemoStep query = steps.Single(s => s.Title == "Query with the API key");
 
-        Assert.Contains("\"echo\":null", query.Response);
-        Assert.Contains("resolver returned null", query.Response);
+        Assert.Contains("The resolver executed", query.Response);
+        Assert.DoesNotContain("\"echo\":null", query.Response);
     }
 
     /// <summary>
@@ -174,6 +228,31 @@ public sealed class AwsAppSyncTests : IAsyncLifetime
         Assert.False(steps[0].Succeeded);
         Assert.False(steps[1].Succeeded, "cleanup claimed success against an emulator it could not reach");
         Assert.Contains("ListGraphqlApisAsync", steps[1].Request);
+    }
+
+    private static async Task<bool> SidecarExistsAsync()
+        => (await RunDockerAsync($"ps -a --filter name=^{GraphqlSidecarName}$ --format {{{{.Names}}}}")).Contains(GraphqlSidecarName, StringComparison.Ordinal);
+
+    private static async Task<string> RunDockerAsync(string arguments)
+    {
+        ProcessStartInfo startInfo = new("docker", arguments) { RedirectStandardOutput = true, RedirectStandardError = true };
+        using Process process = Process.Start(startInfo) ?? throw new InvalidOperationException("docker did not start.");
+
+        // Read before waiting: a process whose output fills the pipe buffer blocks forever on exit.
+        Task<string> stdout = process.StandardOutput.ReadToEndAsync();
+        Task<string> stderr = process.StandardError.ReadToEndAsync();
+
+        await Task.WhenAll(stdout, stderr);
+        await process.WaitForExitAsync();
+
+        // A failed `docker ps` must not read as "no sidecar": that would mark someone else's
+        // sidecar as ours, and DisposeAsync would then remove it.
+        if (process.ExitCode != 0)
+        {
+            throw new InvalidOperationException($"docker {arguments} exited {process.ExitCode}: {await stderr}");
+        }
+
+        return await stdout;
     }
 
     private static AwsEndpoints EndpointsFor(string endpoint)

@@ -37,9 +37,9 @@ starts in roughly 24 ms and idles at about 13 MiB. Service counts below are from
 
 | Emulator | Cloud | Port | Coverage |
 | :--- | :--- | :--- | :--- |
-| [`floci`](https://github.com/floci-io/floci) | AWS | `4566` | 119 services — S3, SQS, DynamoDB, Lambda, EventBridge, Step Functions, RDS, EKS, Bedrock and more |
+| [`floci`](https://github.com/floci-io/floci) | AWS | `4566` | 125 services — S3, SQS, DynamoDB, Lambda, EventBridge, Step Functions, RDS, EKS, Bedrock and more |
 | [`floci-az`](https://github.com/floci-io/floci-az) | Azure | `4577` | 28 services — Blob, Queue, Table, Cosmos DB, Key Vault, Service Bus, Event Hubs, Functions, ARM plane |
-| [`floci-gcp`](https://github.com/floci-io/floci-gcp) | GCP | `4588` | 25 services — GCS, Pub/Sub, Firestore, Secret Manager, Cloud KMS, BigQuery, Cloud Run, GKE |
+| [`floci-gcp`](https://github.com/floci-io/floci-gcp) | GCP | `4588` | 26 services — GCS, Pub/Sub, Firestore, Secret Manager, Cloud KMS, BigQuery, Cloud Run, GKE |
 | [`floci-oci`](https://github.com/floci-io/floci-oci) | Oracle Cloud | `4599` | 8 services — Object Storage, Identity, Queue, Streaming, KMS, Vault Secrets, Functions, OKE |
 | [`floci-ui`](https://github.com/floci-io/floci-ui) | Console | `4500` | Web console for AWS, Azure and GCP |
 

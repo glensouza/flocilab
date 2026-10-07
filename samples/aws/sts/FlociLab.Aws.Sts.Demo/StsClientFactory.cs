@@ -1,4 +1,5 @@
 using Amazon;
+using Amazon.IdentityManagement;
 using Amazon.Runtime;
 using Amazon.SecurityToken;
 using FlociLab.Core.Endpoints;
@@ -47,23 +48,45 @@ public sealed class StsClientFactory(AwsEndpoints endpoints)
         return new AmazonSecurityTokenServiceClient(credentials, this.Config());
     }
 
+    /// <summary>
+    /// The IAM client that makes the role <c>AssumeRole</c> needs — the one place this sample
+    /// reaches for a second package. Same endpoint, same credentials, same retry policy as the STS
+    /// client, so the page's one set of emulator-shaped lines covers both.
+    /// </summary>
+    public IAmazonIdentityManagementService CreateIam()
+        => endpoints.UseEmulator
+            ? new AmazonIdentityManagementServiceClient(endpoints.Credentials(), this.Shared(new AmazonIdentityManagementServiceConfig()))
+            : new AmazonIdentityManagementServiceClient(this.Shared(new AmazonIdentityManagementServiceConfig()));
+
     // Retries come back to the SDK default against real AWS, because the reason they are off is a
     // lab-ergonomics one that does not apply there.
     private AmazonSecurityTokenServiceConfig Config()
-        => endpoints.UseEmulator
-            ? this.EmulatorConfig()
-            : new AmazonSecurityTokenServiceConfig { RegionEndpoint = RegionEndpoint.GetBySystemName(endpoints.Region) };
+        => this.Shared(new AmazonSecurityTokenServiceConfig());
 
-    private AmazonSecurityTokenServiceConfig EmulatorConfig()
-        => new AmazonSecurityTokenServiceConfig
+    // The one place the emulator/real-AWS split lives, so the STS and IAM clients cannot drift
+    // apart: real AWS gets the region and the SDK's own retries, floci gets EmulatorConfig's.
+    private T Shared<T>(T config) where T : ClientConfig
+    {
+        if (!endpoints.UseEmulator)
         {
-            // The SDK default is 4 retries with backoff, which against a stopped emulator turns
-            // one refused connection into ~8 s and a whole run into ~49 s of "Running…". Two
-            // reasons to turn it off here: a page whose whole job is to show "the emulator is
-            // down" has to say so quickly, and the request shown beside each step is meant to be
-            // *the* request — silently sending five would make the page lie about the wire.
-            // A production app against real STS wants the retries; this is the second and last
-            // emulator-shaped line in the sample.
-            MaxErrorRetry = 0,
-        }.ForFloci(endpoints);
+            config.RegionEndpoint = RegionEndpoint.GetBySystemName(endpoints.Region);
+
+            return config;
+        }
+
+        return this.EmulatorConfig(config);
+    }
+
+    private T EmulatorConfig<T>(T config) where T : ClientConfig
+    {
+        // The SDK default is 4 retries with backoff, which against a stopped emulator turns one
+        // refused connection into ~8 s and a whole run into ~49 s of "Running…". Two reasons to
+        // turn it off here: a page whose whole job is to show "the emulator is down" has to say so
+        // quickly, and the request shown beside each step is meant to be *the* request — silently
+        // sending five would make the page lie about the wire. A production app against real STS
+        // wants the retries; this is the second and last emulator-shaped line in the sample.
+        config.MaxErrorRetry = 0;
+
+        return config.ForFloci(endpoints);
+    }
 }

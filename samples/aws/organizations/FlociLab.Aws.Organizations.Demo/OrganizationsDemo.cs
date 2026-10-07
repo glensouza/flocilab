@@ -173,10 +173,11 @@ public sealed class OrganizationsDemo(OrganizationsClientFactory factory) : ISer
                 yield break;
             }
 
-            // SCPs are a policy type the root has to have switched on, and AWS documents a new
-            // root as having none. floci switches SCPs on for every new root, so on floci this
-            // step only ever reports "already enabled" — the call is here because real AWS needs it.
-            if (orgCreateAttempted || !scpEnabled)
+            // SCPs are a policy type the root has to have switched on, and a new root has none —
+            // floci agrees since 2.2.0 (2.1.0 switched them on for every new root). Keyed on what
+            // ListRoots reported rather than on whether this run created the organization, so an
+            // older floci that pre-enables them skips the call instead of failing it.
+            if (!scpEnabled)
             {
                 DemoStep enableStep = await RunStepAsync(
                     "EnablePolicyType",
@@ -188,18 +189,10 @@ public sealed class OrganizationsDemo(OrganizationsClientFactory factory) : ISer
                             throw new InvalidOperationException($"SCPs are not enabled on {rootId}, and this run will not change the policy types of an organization it did not create.");
                         }
 
-                        try
-                        {
-                            EnablePolicyTypeResponse response = await client.EnablePolicyTypeAsync(
-                                new EnablePolicyTypeRequest { RootId = rootId, PolicyType = PolicyType.SERVICE_CONTROL_POLICY }, ct).ConfigureAwait(false);
+                        EnablePolicyTypeResponse response = await client.EnablePolicyTypeAsync(
+                            new EnablePolicyTypeRequest { RootId = rootId, PolicyType = PolicyType.SERVICE_CONTROL_POLICY }, ct).ConfigureAwait(false);
 
-                            return $"HTTP {(int)response.HttpStatusCode} — SCPs enabled on {rootId}";
-                        }
-                        // floci's answer: the new root came with SCPs on. Not a failure of the step.
-                        catch (PolicyTypeAlreadyEnabledException ex)
-                        {
-                            return $"Already enabled — {ex.GetType().Name}: {ex.Message}";
-                        }
+                        return $"HTTP {(int)response.HttpStatusCode} — SCPs enabled on {rootId}";
                     }).ConfigureAwait(false);
 
                 yield return enableStep;

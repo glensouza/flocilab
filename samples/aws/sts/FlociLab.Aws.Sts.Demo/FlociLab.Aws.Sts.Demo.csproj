@@ -5,10 +5,13 @@
   </PropertyGroup>
 
   <!--
-    ONE official cloud package (docs/BLAZOR-PLAN.md §3, constraint 1). AWSSDK.SecurityToken is the
-    same package a production app would reference, used exactly as production would use it — the
-    only difference is the endpoint, which comes from FlociLab.Aws.Endpoints. AWSSDK.Core arrives
-    with it either way, so the endpoints project costs this sample nothing.
+    TWO official cloud packages — a deliberate, user-approved exception to constraint 1
+    (docs/BLAZOR-PLAN.md §3, §14). AWSSDK.SecurityToken is the same package a production app would
+    reference, used exactly as production would use it — the only difference is the endpoint, which
+    comes from FlociLab.Aws.Endpoints. AWSSDK.IdentityManagement is the exception: since floci 2.2.0
+    AssumeRole refuses a role that does not exist or does not trust the caller, as real STS always
+    has, and the only way to make one is IAM CreateRole. AWSSDK.Core arrives with both either way,
+    so the endpoints project costs this sample nothing.
 
     FrameworkReference rather than a Microsoft.AspNetCore.Components.Web package reference: this
     RCL only ever renders server-side inside an ASP.NET Core host, so the shared framework already
@@ -16,6 +19,7 @@
   -->
   <ItemGroup>
     <PackageReference Include="AWSSDK.SecurityToken" />
+    <PackageReference Include="AWSSDK.IdentityManagement" />
   </ItemGroup>
 
   <ItemGroup>

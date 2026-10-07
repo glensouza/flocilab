@@ -8,11 +8,13 @@
 <h1>AWS STS</h1>
 
 <p class="lede">
-    Ask STS who is calling, assume a role, then sign a second client with the temporary credentials
-    that came back and ask again. This is <code>AWSSDK.SecurityToken</code> used exactly as
-    production would use it. STS creates nothing that persists — every credential simply expires —
-    so there is no cleanup and re-running the page always starts from the same account. The secret
-    access key and session token are never rendered; only their identifiers are.
+    Ask STS who is calling, create a role that trusts this account (through
+    <code>AWSSDK.IdentityManagement</code> — STS refuses a role that does not exist), assume it,
+    then sign a second client with the temporary credentials that came back and ask again. This is
+    <code>AWSSDK.SecurityToken</code> used exactly as production would use it. The credentials
+    simply expire; the role is deleted at the end, so re-running the page always starts from the
+    same account. The secret access key and session token are never rendered; only their
+    identifiers are.
 </p>
 
 <dl class="facts">
@@ -23,7 +25,7 @@
     <dt>Endpoint</dt>
     <dd><code>@this.Factory.ServiceUrl</code></dd>
     <dt>Package</dt>
-    <dd><code>AWSSDK.SecurityToken</code></dd>
+    <dd><code>AWSSDK.SecurityToken</code> + <code>AWSSDK.IdentityManagement</code> (for the role)</dd>
 </dl>
 
 <div class="toolbar">
@@ -115,7 +117,7 @@
         }
         catch (OperationCanceledException)
         {
-            // Navigated away mid-run. STS created nothing, so there is nothing to clean up.
+            // Navigated away mid-run. The demo's own finally deletes the role it created.
         }
         finally
         {

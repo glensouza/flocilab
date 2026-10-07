@@ -1,3 +1,4 @@
+using System.Net;
 using Amazon.CognitoIdentityProvider;
 using Amazon.CognitoIdentityProvider.Model;
 using FlociLab.Aws.Cognito;
@@ -106,13 +107,52 @@ public sealed class AwsCognitoTests : IAsyncLifetime
     }
 
     /// <summary>
-    /// Tripwire for two checks real Cognito makes and floci 2.1.0 skips (docs/BLAZOR-PLAN.md §14):
-    /// USER_PASSWORD_AUTH on a client that never enabled it (AWS: InvalidParameterException) and a
-    /// three-character password (AWS: InvalidPasswordException). When upstream starts enforcing
-    /// either, this fails — flip it to assert the rejection.
+    /// floci 2.2.0 enforces a client's <c>ExplicitAuthFlows</c>: <c>USER_PASSWORD_AUTH</c> on a
+    /// client that never enabled it is refused with <c>InvalidParameterException</c>, as AWS does.
+    /// 2.1.0 issued tokens anyway (docs/BLAZOR-PLAN.md §14). The demo already sets
+    /// <c>ALLOW_USER_PASSWORD_AUTH</c>, so it is unaffected.
     /// </summary>
     [Fact]
-    public async Task Floci_Ignores_The_Client_Auth_Flows_And_The_Password_Policy()
+    public async Task Client_Without_Explicit_Auth_Flows_Refuses_User_Password_Auth()
+    {
+        CancellationToken ct = TestContext.Current.CancellationToken;
+        using IAmazonCognitoIdentityProvider client = this.factory.Create();
+
+        string poolId = (await client.CreateUserPoolAsync(new CreateUserPoolRequest { PoolName = $"flocilab-cognito-flows-{Guid.NewGuid():N}" }, ct)).UserPool.Id;
+
+        try
+        {
+            // No ExplicitAuthFlows at all — on AWS this client cannot use USER_PASSWORD_AUTH.
+            string clientId = (await client.CreateUserPoolClientAsync(new CreateUserPoolClientRequest { UserPoolId = poolId, ClientName = "no-flows" }, ct)).UserPoolClient.ClientId;
+
+            await client.AdminCreateUserAsync(new AdminCreateUserRequest { UserPoolId = poolId, Username = "alice", MessageAction = MessageActionType.SUPPRESS }, ct);
+
+            InvalidParameterException ex = await Assert.ThrowsAsync<InvalidParameterException>(
+                () => client.InitiateAuthAsync(
+                    new InitiateAuthRequest
+                    {
+                        ClientId = clientId,
+                        AuthFlow = AuthFlowType.USER_PASSWORD_AUTH,
+                        AuthParameters = new Dictionary<string, string> { ["USERNAME"] = "alice", ["PASSWORD"] = "abc" },
+                    },
+                    ct));
+
+            Assert.Contains("USER_PASSWORD_AUTH flow not enabled", ex.Message);
+        }
+        finally
+        {
+            await client.DeleteUserPoolAsync(new DeleteUserPoolRequest { UserPoolId = poolId }, CancellationToken.None);
+        }
+    }
+
+    /// <summary>
+    /// Tripwire (docs/BLAZOR-PLAN.md §14): real Cognito answers <c>InvalidPasswordException</c> to a
+    /// three-character password under the default policy. floci 2.1.0 accepted it, and 2.2.0 still
+    /// does — observed 2026-10-06 against a fresh container, despite its release notes mentioning
+    /// password-policy validation. When it fails, flip it to assert the rejection.
+    /// </summary>
+    [Fact]
+    public async Task Floci_Ignores_The_Password_Policy()
     {
         CancellationToken ct = TestContext.Current.CancellationToken;
         using IAmazonCognitoIdentityProvider client = this.factory.Create();
@@ -121,22 +161,12 @@ public sealed class AwsCognitoTests : IAsyncLifetime
 
         try
         {
-            // No ExplicitAuthFlows at all — on AWS this client cannot use USER_PASSWORD_AUTH.
-            string clientId = (await client.CreateUserPoolClientAsync(new CreateUserPoolClientRequest { UserPoolId = poolId, ClientName = "no-flows" }, ct)).UserPoolClient.ClientId;
-
             await client.AdminCreateUserAsync(new AdminCreateUserRequest { UserPoolId = poolId, Username = "alice", MessageAction = MessageActionType.SUPPRESS }, ct);
-            await client.AdminSetUserPasswordAsync(new AdminSetUserPasswordRequest { UserPoolId = poolId, Username = "alice", Password = "abc", Permanent = true }, ct);
 
-            InitiateAuthResponse response = await client.InitiateAuthAsync(
-                new InitiateAuthRequest
-                {
-                    ClientId = clientId,
-                    AuthFlow = AuthFlowType.USER_PASSWORD_AUTH,
-                    AuthParameters = new Dictionary<string, string> { ["USERNAME"] = "alice", ["PASSWORD"] = "abc" },
-                },
-                ct);
+            AdminSetUserPasswordResponse response = await client.AdminSetUserPasswordAsync(
+                new AdminSetUserPasswordRequest { UserPoolId = poolId, Username = "alice", Password = "abc", Permanent = true }, ct);
 
-            Assert.False(string.IsNullOrEmpty(response.AuthenticationResult?.AccessToken));
+            Assert.Equal(HttpStatusCode.OK, response.HttpStatusCode);
         }
         finally
         {
