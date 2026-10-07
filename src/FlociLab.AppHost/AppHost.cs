@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 using FlociLab.Core.Configuration;
 
 // FlociLab orchestration: four emulator containers plus the unified web app, one F5.
@@ -143,7 +144,103 @@ builder.AddProject<Projects.FlociLab_All_Web>("all")
     .WaitFor(gcp)
     .WaitFor(oci);
 
+// Persistent containers outlive the AppHost, and Aspire reuses one as long as its spec is
+// unchanged — a new image behind the same :latest tag is not a change. So without this the lab
+// kept running whatever floci it first started: an eight-day-old 2.1.0 while the tests, which
+// start fresh containers, were already on 2.2.0. Set FlociLab:RefreshImages=false to skip it
+// (offline, or pinned on purpose).
+if (!string.Equals(builder.Configuration["FlociLab:RefreshImages"], "false", StringComparison.OrdinalIgnoreCase))
+{
+    RefreshFlociImages(["floci", "floci-az", "floci-gcp", "floci-oci", "floci-ui"]);
+}
+
 builder.Build().Run();
+
+// Pulls floci/<name>:latest for each lab container, then removes any lab container still running
+// an older image so the AppHost recreates it on the new one. Only the containers are removed:
+// emulator state lives in the flocilab-*-data volumes and survives. A failed pull (offline, Docker
+// Hub rate limit) is reported and the existing container is kept, because an old emulator is
+// better than none.
+static void RefreshFlociImages(string[] resources)
+{
+    // Aspire names a persistent container <resource>-<8 hex chars, fixed per AppHost>.
+    (int listed, string containers) = Capture("docker", "ps -a --format \"{{.Names}} {{.Image}} {{.ID}}\"", 30_000);
+
+    if (listed != 0)
+    {
+        Console.Error.WriteLine("RefreshFlociImages: docker is not answering; leaving the lab containers as they are.");
+        return;
+    }
+
+    foreach (string resource in resources)
+    {
+        string image = $"floci/{resource}:latest";
+        (int pulled, string pullOutput) = Capture("docker", $"pull -q {image}", 300_000);
+
+        if (pulled != 0)
+        {
+            Console.Error.WriteLine($"RefreshFlociImages: could not pull {image}, keeping the current container. {pullOutput.Trim()}");
+            continue;
+        }
+
+        (_, string latestId) = Capture("docker", $"image inspect --format \"{{{{.Id}}}}\" {image}", 30_000);
+
+        foreach (string line in containers.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            string[] fields = line.Split(' ');
+
+            if (fields.Length != 3 || !Regex.IsMatch(fields[0], $"^{Regex.Escape(resource)}-[0-9a-f]{{8}}$"))
+            {
+                continue;
+            }
+
+            (_, string runningId) = Capture("docker", $"inspect --format \"{{{{.Image}}}}\" {fields[2]}", 30_000);
+
+            if (runningId.Trim() == latestId.Trim())
+            {
+                continue;
+            }
+
+            Console.WriteLine($"RefreshFlociImages: {fields[0]} runs an older {image}; removing it so the AppHost recreates it.");
+            Capture("docker", $"rm -f {fields[2]}", 60_000);
+        }
+    }
+
+    static (int ExitCode, string Output) Capture(string fileName, string arguments, int timeoutMs)
+    {
+        try
+        {
+            using Process? process = Process.Start(new ProcessStartInfo(fileName, arguments)
+            {
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+            });
+
+            if (process is null)
+            {
+                return (-1, string.Empty);
+            }
+
+            // Drain both pipes before waiting, for the reason EnsureNetwork's Run gives.
+            Task<string> stdout = process.StandardOutput.ReadToEndAsync();
+            Task<string> stderr = process.StandardError.ReadToEndAsync();
+
+            if (!process.WaitForExit(timeoutMs))
+            {
+                process.Kill(entireProcessTree: true);
+                return (-1, "timed out");
+            }
+
+            Task.WaitAll(stdout, stderr);
+            return (process.ExitCode, process.ExitCode == 0 ? stdout.Result : stderr.Result);
+        }
+        catch (Exception ex)
+        {
+            // Docker missing or not on PATH: report it as a failed command, which every caller handles.
+            return (-1, ex.Message);
+        }
+    }
+}
 
 // Creates the shared network if it does not exist yet. Has to run before the app starts, because
 // "docker run --network floci" fails rather than creating one. Idempotent, and safe against a
