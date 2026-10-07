@@ -4,9 +4,9 @@ A living plan and progress tracker for building **one .NET sample per Floci-emul
 composable into per-provider Blazor apps and a unified side-by-side comparison app, orchestrated by
 Aspire.
 
-**Status:** Phase 0–2 complete · Phase 3 under way · **48 / 190 services** (0 ⊘ — the last, Key Vault Keys,
+**Status:** Phase 0–2 complete · Phase 3 under way · **49 / 190 services** (0 ⊘ — the last, Key Vault Keys,
 cleared 2026-10-06 when floci-az 0.14.0 shipped this project's fix) · **5 / 5 comparison pages**
-**Last updated:** 2026-10-06
+**Last updated:** 2026-10-07
 
 ---
 
@@ -808,7 +808,7 @@ Legend: ☐ not started · ◐ in progress · ☑ demo + test passing · ⊘ emu
 Per service: **RCL** (page + wrapper) · **T** (integration test) · **C** (capability, where an
 analog exists).
 
-### AWS — `floci` :4566 — 33/125
+### AWS — `floci` :4566 — 34/125
 
 Rows follow the service cards on [floci.io/aws](https://floci.io/aws/), split only where the .NET
 SDK splits the package (constraint 1): EventBridge/Pipes/Scheduler, SES v1/v2, Bedrock/Runtime,
@@ -866,7 +866,7 @@ Serverless, SageMaker and CodeArtifact.
 </details>
 
 <details>
-<summary><strong>Identity and access (7/9)</strong></summary>
+<summary><strong>Identity and access (9/9)</strong></summary>
 
 | ☐ | Service | Kind |
 |:-:|:---|:---|
@@ -878,7 +878,7 @@ Serverless, SageMaker and CodeArtifact.
 | ☑ | Resource Access Manager | C |
 | ☑ | AWS Account | C |
 | ☑ | Verified Permissions | A |
-| ☐ | ACM | A |
+| ☑ | ACM | A |
 </details>
 
 <details>

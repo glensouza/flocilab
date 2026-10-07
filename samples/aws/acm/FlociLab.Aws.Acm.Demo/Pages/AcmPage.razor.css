@@ -1,0 +1,86 @@
+/* Scoped to this component and bundled into the host's <App>.styles.css automatically, so the
+   RCL owns its page's styling as well as its markup and the host needs no change to take it.
+   The custom properties come from the host shell's :root palette. */
+
+.facts {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 0.15rem 1rem;
+    margin: 1.25rem 0 0;
+    font-size: 0.9rem;
+}
+
+.facts dt {
+    color: var(--fg-muted);
+}
+
+.facts dd {
+    margin: 0;
+}
+
+.step {
+    border: 1px solid var(--border);
+    border-left-width: 3px;
+    border-radius: 6px;
+    padding: 0.25rem 1rem 1rem;
+    margin-bottom: 1rem;
+}
+
+.step-ok {
+    border-left-color: var(--ok);
+}
+
+.step-failed {
+    border-left-color: var(--err);
+}
+
+.step h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 1rem;
+    margin: 1rem 0 0.5rem;
+}
+
+.step h3 {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 0.9rem 0 0.3rem;
+}
+
+.step pre {
+    background: var(--bg-sunken);
+    border-radius: 4px;
+    padding: 0.6rem 0.8rem;
+    margin: 0;
+    font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    /* Wire traffic is wide and worth reading in full — scroll it rather than wrapping mid-token. */
+    overflow-x: auto;
+}
+
+.step pre.error {
+    background: var(--err-bg);
+    color: var(--err);
+    white-space: pre-wrap;
+}
+
+/* Which cloud this page is actually pointed at. Muted for the emulator, loud for real cloud —
+   this is the one fact a viewer has to be able to read off a paused frame, and the one a
+   presenter has to notice before clicking Run on an account that bills. */
+.facts dd.target {
+    font-weight: 600;
+}
+
+.facts dd.target-emulator {
+    color: var(--fg-muted);
+}
+
+.facts dd.target-real {
+    color: var(--err);
+    background: var(--err-bg);
+    border-radius: 4px;
+    padding: 0.1rem 0.45rem;
+}

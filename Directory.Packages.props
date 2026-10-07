@@ -40,6 +40,7 @@
     <PackageVersion Include="AWSSDK.ApiGatewayV2" Version="4.0.100.14" />
     <PackageVersion Include="AWSSDK.ApiGatewayManagementApi" Version="4.0.100.15" />
     <PackageVersion Include="AWSSDK.AppSync" Version="4.0.100.14" />
+    <PackageVersion Include="AWSSDK.CertificateManager" Version="4.0.102.6" />
     <PackageVersion Include="AWSSDK.CloudFront" Version="4.0.101.4" />
     <PackageVersion Include="AWSSDK.CloudWatch" Version="4.0.104.2" />
     <PackageVersion Include="AWSSDK.CloudWatchLogs" Version="4.0.104.1" />

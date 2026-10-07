@@ -1,6 +1,7 @@
 using System.Reflection;
 using FlociLab.All.Web.Components;
 using FlociLab.Aws.AccessAnalyzer;
+using FlociLab.Aws.Acm;
 using FlociLab.Aws.Account;
 using FlociLab.Aws.ApiGatewayRest;
 using FlociLab.Aws.ApiGatewayV2;
@@ -97,6 +98,7 @@ builder.Services
     .AddAwsOrganizationsDemo()
     .AddAwsRamDemo()
     .AddAwsVerifiedPermissionsDemo()
+    .AddAwsAcmDemo()
     .AddAzureBlobDemo()
     .AddAzureQueueDemo()
     .AddAzureServiceBusDemo()

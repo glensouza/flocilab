@@ -1,5 +1,6 @@
 using System.Reflection;
 using FlociLab.Aws.AccessAnalyzer;
+using FlociLab.Aws.Acm;
 using FlociLab.Aws.Account;
 using FlociLab.Aws.ApiGatewayRest;
 using FlociLab.Aws.ApiGatewayV2;
@@ -78,7 +79,8 @@ builder.Services
     .AddAwsAccountDemo()
     .AddAwsOrganizationsDemo()
     .AddAwsRamDemo()
-    .AddAwsVerifiedPermissionsDemo();
+    .AddAwsVerifiedPermissionsDemo()
+    .AddAwsAcmDemo();
 
 WebApplication app = builder.Build();
 
