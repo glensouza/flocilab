@@ -17,8 +17,7 @@ loop. Read the plan before starting work — do not re-derive it.
 ## Commands
 
 ```bash
-# Restore and build (warnings are errors — keep it clean)
-dotnet restore
+# Build (warnings are errors — keep it clean)
 dotnet build -warnaserror
 
 # Run everything: 4 emulators + floci-ui + FlociLab.All.Web, one F5
@@ -34,9 +33,6 @@ dotnet run --project hosts/FlociLab.Aws.Web --launch-profile http   # 5120, then
 dotnet test tests/FlociLab.IntegrationTests
 dotnet test tests/FlociLab.IntegrationTests --filter "FullyQualifiedName~S3"
 
-# Format
-dotnet format
-
 # Emulator health (paths are NOT uniform — gcp and oci namespace theirs)
 curl -fsS http://127.0.0.1:4566/_floci/health        # aws
 curl -fsS http://127.0.0.1:4577/_floci/health        # azure
@@ -51,16 +47,10 @@ dotnet list samples/aws/s3/FlociLab.Aws.S3.Demo package --include-transitive
 
 ### Projects
 
-| Project | Role |
-|---|---|
-| `src/FlociLab.Core` | Contracts only — `IServiceDemo`, `ProbeResult`, `DemoStep`, five capability interfaces, `FlociOptions`. **Zero cloud dependencies, ever.** |
-| `src/FlociLab.{Aws,Azure,Gcp,Oci}.Endpoints` | Emulator wiring expressed in SDK types, written once per provider. Each references only that provider's `*.Core` package, which every sample already pulls in transitively. |
-| `src/FlociLab.AppHost` | Aspire orchestration: four emulator containers, `floci-ui`, the web app |
-| `src/FlociLab.Comparison` | RCL of side-by-side pages; consumes capability interfaces, references no SDK |
-| `hosts/FlociLab.All.Web` | Unified Blazor Web App, global `InteractiveServer`. References Core plus one sample RCL per demo. |
-| `hosts/FlociLab.{Aws,Azure,Gcp,Oci}.Web` | One standalone host per provider — Core plus that provider's RCLs and nothing else, which is what makes a sample clonable on its own. Same chrome as `All.Web`, minus the comparison nav. |
-| `samples/<provider>/<service>/FlociLab.<Provider>.<Service>.Demo` | One Razor Class Library per emulated service |
-| `tests/FlociLab.IntegrationTests` | One test class per sample, `Testcontainers.Floci` |
+- `src/FlociLab.{Provider}.Endpoints` references only that provider's `*.Core` package, which every
+  sample already pulls in transitively — so it never counts as a second SDK.
+- `hosts/FlociLab.{Provider}.Web` holds Core plus that provider's RCLs and nothing else; that is what
+  makes a sample clonable on its own.
 
 ### Key files to read first
 
@@ -183,13 +173,8 @@ changes the plan, add it to `docs/BLAZOR-PLAN.md` §14.
 
 ## Testing
 
-- One test class per sample in `tests/FlociLab.IntegrationTests`, using `Testcontainers.Floci` with
-  the image pinned explicitly (`new FlociBuilder("floci/floci:latest")` — the module still defaults
-  to an older tag, and its parameterless constructor is obsolete).
-- A demo is not ticked in §13 until its integration test passes.
-- If the emulator returns `501`, **assert `ProbeStatus.NotImplemented` explicitly** rather than
-  skipping. The test then becomes the tripwire that tells you when upstream ships it.
-- Also assert the `Unreachable` classification — a stopped emulator must not read as a broken sample.
+- A demo is not ticked in §13 until its integration test passes. How to write that test lives in
+  `tests/FlociLab.IntegrationTests/CLAUDE.md`.
 - Demo runs clean up in a `finally` and use a unique per-run resource name, so re-runs are
   idempotent. Test that by running the round-trip twice.
 
