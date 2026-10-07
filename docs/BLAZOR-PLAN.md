@@ -225,7 +225,7 @@ floci/
 ├── README.md                       # the Docker/Portainer lab (done)
 ├── docs/BLAZOR-PLAN.md             # this file
 ├── docs/RCL-TEMPLATE.md            # file-by-file skeleton behind every Kind A sample
-├── docs/WORKFLOW.md                # the /next -> /ship loop
+├── docs/WORKFLOW.md                # the build -> review -> tick loop
 ├── FlociLab.slnx                   # slnx, the SDK's current default solution format
 ├── Directory.Build.props           # net10.0, nullable, warnaserror
 ├── Directory.Packages.props        # central package management — pins every SDK version
@@ -1224,20 +1224,9 @@ One row per card on [floci.io/gcp](https://floci.io/gcp/). Re-synced against flo
 
 ## Working agreement
 
-Full detail in [`WORKFLOW.md`](WORKFLOW.md). In short — two skills, one loop:
+See [`WORKFLOW.md`](WORKFLOW.md). In short: build the next unchecked item, review it, and only then
+tick it ☑ here — a ☑ is read downstream as "shipped, safe to make content about".
 
-```
-/next   →  picks the next unchecked item and builds it (leaves the box unticked)
-/ship   →  code review → apply findings → tick ☑ → commit → sync → write the episode
-```
-
-`/next` never marks anything ☑. **Only `/ship` does, and only after review passes.** That matters
-because `../floci-content` reads ☑ as "shipped, safe to make a video about" — a premature tick puts
-unreviewed code on YouTube.
-
-- `/next` with no argument takes the next unchecked item in the earliest incomplete phase;
-  `/next azure servicebus` jumps to a specific one.
 - One service per PR (or one category per PR in Phase 3).
 - A service is done when: RCL builds · integration test passes · registered in its provider host
   and in `All.Web` · capability implemented if the row names one · reviewed · ticked here.
-- Opus `/code-review` before every merge — `/ship` invokes it.

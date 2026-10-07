@@ -9,7 +9,7 @@ A step-by-step guide to running an all-in-one **local multi-cloud emulation lab*
 
 This lab is also the foundation for **FlociLab** — a .NET sample for every service these emulators
 support, built with Blazor and Aspire. See [`docs/BLAZOR-PLAN.md`](docs/BLAZOR-PLAN.md) for the plan
-and [`docs/WORKFLOW.md`](docs/WORKFLOW.md) for how the `/next` and `/ship` skills drive it.
+and [`docs/WORKFLOW.md`](docs/WORKFLOW.md) for how work gets built, reviewed and counted as done.
 
 ---
 

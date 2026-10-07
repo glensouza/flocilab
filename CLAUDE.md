@@ -11,8 +11,8 @@ YouTube/blog series — `../floci-content` reads this repo's checklists to decid
 publish.
 
 `README.md` documents the Docker/Portainer lab itself. `docs/BLAZOR-PLAN.md` is the build plan and
-the single source of truth for what is done; `docs/WORKFLOW.md` describes the `/next` → `/ship`
-loop. Read the plan before starting work — do not re-derive it.
+the single source of truth for what is done; `docs/WORKFLOW.md` is the public
+summary of the loop. Read the plan before starting work — do not re-derive it.
 
 ## Commands
 
