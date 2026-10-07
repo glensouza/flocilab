@@ -196,7 +196,13 @@ changes the plan, add it to `docs/BLAZOR-PLAN.md` §14.
 ```
 /next   →  picks the next unchecked item in docs/BLAZOR-PLAN.md and builds it (leaves the box ☐)
 /ship   →  code review → apply findings → tick ☑ → commit → sync to ../floci-content → episode
+/floci-release → a new Floci image: full suite, flip fixed tripwires, fix moved samples, new rows,
+                 then re-verify affected episodes and labs (recorded/published ones: stop and ask)
 ```
+
+The skills live in the private `../floci-content` repo, and sessions normally start there with this
+repo as an additional directory, so this file still loads. A session started here has the rules
+but not the skills.
 
 ## Working efficiently here
 
