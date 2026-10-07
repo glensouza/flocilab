@@ -5,6 +5,7 @@ using FlociLab.Aws.Account;
 using FlociLab.Aws.ApiGatewayRest;
 using FlociLab.Aws.ApiGatewayV2;
 using FlociLab.Aws.AppSync;
+using FlociLab.Aws.AutoScaling;
 using FlociLab.Aws.CloudFront;
 using FlociLab.Aws.CloudMap;
 using FlociLab.Aws.CloudWatchLogs;
@@ -82,7 +83,8 @@ builder.Services
     .AddAwsRamDemo()
     .AddAwsVerifiedPermissionsDemo()
     .AddAwsAcmDemo()
-    .AddAwsLightsailDemo();
+    .AddAwsLightsailDemo()
+    .AddAwsAutoScalingDemo();
 
 WebApplication app = builder.Build();
 
