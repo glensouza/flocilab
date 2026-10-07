@@ -147,7 +147,8 @@ public sealed class AppSyncDemo(AppSyncClientFactory factory, IHttpClientFactory
                             if (Stopwatch.GetTimestamp() >= deadline)
                             {
                                 // floci 2.2.0 loads the schema in a GraphQL sidecar it starts through the Docker socket;
-                                // with no socket it stays PROCESSING forever, which reads as a hang.
+                                // with no socket it stays PROCESSING for 30-50 s while floci retries Docker, then
+                                // goes FAILED — longer than this budget, so it reads as a hang here.
                                 throw new InvalidOperationException($"Schema still PROCESSING after {SchemaPollBudget.TotalSeconds:0} s." + (factory.UseEmulator ? " floci starts its GraphQL engine as a sidecar container through the Docker socket — check floci has the socket and can pull floci/floci-sidecar-graphql." : string.Empty));
                             }
 

@@ -19,7 +19,8 @@ namespace FlociLab.IntegrationTests;
 /// <para>
 /// Since floci 2.2.0 the GraphQL engine is a <i>sidecar</i> container floci starts itself through
 /// the Docker socket, on the first schema it has to load. Without the socket the schema stays
-/// <c>PROCESSING</c> forever. So the socket is mounted, and the sidecar — <c>floci-aws-graphql</c>,
+/// <c>PROCESSING</c> for 30-50 s while floci retries Docker, then goes <c>FAILED</c>. So the socket
+/// is mounted, and the sidecar — <c>floci-aws-graphql</c>,
 /// a Docker-host singleton like Service Bus's Artemis — is brought up in
 /// <see cref="InitializeAsync"/> (the first image pull can outlast the demo's own 30 s budget) and
 /// removed afterwards only if this run is what started it.
@@ -76,6 +77,12 @@ public sealed class AwsAppSyncTests : IAsyncLifetime
 
             await Task.Delay(TimeSpan.FromSeconds(1), ct);
             status = await client.GetSchemaCreationStatusAsync(new GetSchemaCreationStatusRequest { ApiId = api.GraphqlApi.ApiId }, ct);
+        }
+
+        // Without the socket the schema leaves PROCESSING too — as FAILED, with the reason in Details.
+        if (status.Status != SchemaStatus.SUCCESS && status.Status != SchemaStatus.ACTIVE)
+        {
+            throw new InvalidOperationException($"the GraphQL sidecar warm-up ended {status.Status}: {status.Details}");
         }
     }
 
