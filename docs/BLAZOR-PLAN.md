@@ -82,7 +82,7 @@ changed).
 | Aspire | `13.5.3` | `Aspire.Hosting.AppHost`, `Aspire.AppHost.Sdk` |
 | `Aspire.Hosting.Azure.Functions` | `13.5.3` | For Kind B Azure function projects |
 | `Aspire.Hosting.AWS` | `13.7.2` | AWS-flavoured Aspire resources |
-| `Testcontainers.Floci` | `4.15.0` | Official .NET Testcontainers module |
+| `Testcontainers.Floci` | `4.16.0` | Official .NET Testcontainers module |
 | `floci/floci` | `2.2.0` | 125 services; ships its own `HEALTHCHECK`. Samples through API Gateway REST were built on `1.7.0`. Released 2026-10-06; §14 records what it changed and how the samples and tests were updated |
 | `floci/floci-az` | `0.14.0` | 28 services; health payload reports `version: dev`. Re-checked 2026-10-06 |
 | `floci/floci-gcp` | `0.10.0` | 26 services (Compute Engine is new). Released 2026-10-06 |
@@ -653,7 +653,7 @@ What Aspire buys beyond convenience:
 
 ## 10. Testing strategy
 
-Every sample ships one integration test using `Testcontainers.Floci` (4.15.0) — a throwaway
+Every sample ships one integration test using `Testcontainers.Floci` (4.16.0) — a throwaway
 emulator per test class, so CI needs no running stack.
 
 ```csharp
@@ -670,7 +670,7 @@ public async Task ServiceBus_RoundTrip_Succeeds()
 }
 ```
 
-`Testcontainers.Floci` 4.15.0 defaults to `floci/floci:1.5.13` and has deprecated its
+`Testcontainers.Floci` 4.16.0 defaults to `floci/floci:1.5.13` (unchanged from 4.15.0; re-checked against its assembly 2026-10-08) and has deprecated its
 parameterless `FlociBuilder()` constructor, so pass the image explicitly:
 `new FlociBuilder("floci/floci:latest")`. A suite that tests an older build than the AppHost runs
 is not the tripwire the checklists need it to be. There is no Testcontainers module for `floci-az`,

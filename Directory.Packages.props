@@ -34,44 +34,44 @@
     package, so no sample gains a dependency it did not already have.
   -->
   <ItemGroup>
-    <PackageVersion Include="AWSSDK.AccessAnalyzer" Version="4.0.100.16" />
-    <PackageVersion Include="AWSSDK.Account" Version="4.0.102" />
-    <PackageVersion Include="AWSSDK.APIGateway" Version="4.0.101.1" />
-    <PackageVersion Include="AWSSDK.ApiGatewayV2" Version="4.0.100.15" />
-    <PackageVersion Include="AWSSDK.ApiGatewayManagementApi" Version="4.0.100.16" />
-    <PackageVersion Include="AWSSDK.AppSync" Version="4.0.100.16" />
-    <PackageVersion Include="AWSSDK.AutoScaling" Version="4.0.104.4" />
-    <PackageVersion Include="AWSSDK.CertificateManager" Version="4.0.102.7" />
-    <PackageVersion Include="AWSSDK.CloudFront" Version="4.0.102" />
-    <PackageVersion Include="AWSSDK.CloudWatch" Version="4.0.105.1" />
-    <PackageVersion Include="AWSSDK.CloudWatchLogs" Version="4.0.105" />
-    <PackageVersion Include="AWSSDK.CognitoIdentityProvider" Version="4.0.106" />
-    <PackageVersion Include="AWSSDK.Core" Version="4.0.102.8" />
-    <PackageVersion Include="AWSSDK.DynamoDBv2" Version="4.0.107" />
-    <PackageVersion Include="AWSSDK.ElasticLoadBalancing" Version="4.0.100.15" />
-    <PackageVersion Include="AWSSDK.ElasticLoadBalancingV2" Version="4.0.101.12" />
-    <PackageVersion Include="AWSSDK.EventBridge" Version="4.0.101.1" />
-    <PackageVersion Include="AWSSDK.GlobalAccelerator" Version="4.0.101" />
-    <PackageVersion Include="AWSSDK.IdentityManagement" Version="4.0.103.7" />
-    <PackageVersion Include="AWSSDK.KeyManagementService" Version="4.0.100.15" />
-    <PackageVersion Include="AWSSDK.Lightsail" Version="4.0.102.2" />
-    <PackageVersion Include="AWSSDK.Organizations" Version="4.0.102" />
-    <PackageVersion Include="AWSSDK.Pipes" Version="4.0.100.16" />
-    <PackageVersion Include="AWSSDK.RAM" Version="4.0.100.16" />
-    <PackageVersion Include="AWSSDK.Route53" Version="4.0.100.15" />
-    <PackageVersion Include="AWSSDK.Route53Resolver" Version="4.0.100.16" />
-    <PackageVersion Include="AWSSDK.S3" Version="4.0.104.1" />
-    <PackageVersion Include="AWSSDK.Scheduler" Version="4.0.100.15" />
-    <PackageVersion Include="AWSSDK.SecretsManager" Version="4.0.100.15" />
-    <PackageVersion Include="AWSSDK.SecurityToken" Version="4.0.101.1" />
-    <PackageVersion Include="AWSSDK.ServiceDiscovery" Version="4.0.101.11" />
-    <PackageVersion Include="AWSSDK.SimpleNotificationService" Version="4.0.100.16" />
-    <PackageVersion Include="AWSSDK.SimpleSystemsManagement" Version="4.0.104.1" />
-    <PackageVersion Include="AWSSDK.SimpleWorkflow" Version="4.0.100.15" />
-    <PackageVersion Include="AWSSDK.SQS" Version="4.0.100.15" />
-    <PackageVersion Include="AWSSDK.SSOAdmin" Version="4.0.103.1" />
-    <PackageVersion Include="AWSSDK.StepFunctions" Version="4.0.100.16" />
-    <PackageVersion Include="AWSSDK.VerifiedPermissions" Version="4.0.100.15" />
+    <PackageVersion Include="AWSSDK.AccessAnalyzer" Version="4.0.100.17" />
+    <PackageVersion Include="AWSSDK.Account" Version="4.0.102.1" />
+    <PackageVersion Include="AWSSDK.APIGateway" Version="4.0.101.2" />
+    <PackageVersion Include="AWSSDK.ApiGatewayV2" Version="4.0.100.16" />
+    <PackageVersion Include="AWSSDK.ApiGatewayManagementApi" Version="4.0.100.17" />
+    <PackageVersion Include="AWSSDK.AppSync" Version="4.0.100.17" />
+    <PackageVersion Include="AWSSDK.AutoScaling" Version="4.0.104.5" />
+    <PackageVersion Include="AWSSDK.CertificateManager" Version="4.0.102.8" />
+    <PackageVersion Include="AWSSDK.CloudFront" Version="4.0.102.1" />
+    <PackageVersion Include="AWSSDK.CloudWatch" Version="4.0.105.2" />
+    <PackageVersion Include="AWSSDK.CloudWatchLogs" Version="4.0.105.1" />
+    <PackageVersion Include="AWSSDK.CognitoIdentityProvider" Version="4.0.106.1" />
+    <PackageVersion Include="AWSSDK.Core" Version="4.0.102.9" />
+    <PackageVersion Include="AWSSDK.DynamoDBv2" Version="4.0.107.1" />
+    <PackageVersion Include="AWSSDK.ElasticLoadBalancing" Version="4.0.100.16" />
+    <PackageVersion Include="AWSSDK.ElasticLoadBalancingV2" Version="4.0.101.13" />
+    <PackageVersion Include="AWSSDK.EventBridge" Version="4.0.101.2" />
+    <PackageVersion Include="AWSSDK.GlobalAccelerator" Version="4.0.101.1" />
+    <PackageVersion Include="AWSSDK.IdentityManagement" Version="4.0.103.8" />
+    <PackageVersion Include="AWSSDK.KeyManagementService" Version="4.0.100.16" />
+    <PackageVersion Include="AWSSDK.Lightsail" Version="4.0.102.3" />
+    <PackageVersion Include="AWSSDK.Organizations" Version="4.0.102.1" />
+    <PackageVersion Include="AWSSDK.Pipes" Version="4.0.100.17" />
+    <PackageVersion Include="AWSSDK.RAM" Version="4.0.100.17" />
+    <PackageVersion Include="AWSSDK.Route53" Version="4.0.100.16" />
+    <PackageVersion Include="AWSSDK.Route53Resolver" Version="4.0.100.17" />
+    <PackageVersion Include="AWSSDK.S3" Version="4.0.104.2" />
+    <PackageVersion Include="AWSSDK.Scheduler" Version="4.0.100.16" />
+    <PackageVersion Include="AWSSDK.SecretsManager" Version="4.0.100.16" />
+    <PackageVersion Include="AWSSDK.SecurityToken" Version="4.0.101.2" />
+    <PackageVersion Include="AWSSDK.ServiceDiscovery" Version="4.0.101.12" />
+    <PackageVersion Include="AWSSDK.SimpleNotificationService" Version="4.0.100.17" />
+    <PackageVersion Include="AWSSDK.SimpleSystemsManagement" Version="4.0.104.2" />
+    <PackageVersion Include="AWSSDK.SimpleWorkflow" Version="4.0.100.16" />
+    <PackageVersion Include="AWSSDK.SQS" Version="4.0.100.16" />
+    <PackageVersion Include="AWSSDK.SSOAdmin" Version="4.0.103.2" />
+    <PackageVersion Include="AWSSDK.StepFunctions" Version="4.0.100.17" />
+    <PackageVersion Include="AWSSDK.VerifiedPermissions" Version="4.0.100.16" />
     <PackageVersion Include="Azure.Identity" Version="1.21.0" />
     <PackageVersion Include="Azure.Messaging.ServiceBus" Version="7.21.0" />
     <PackageVersion Include="Azure.Security.KeyVault.Keys" Version="4.10.2" />
@@ -102,8 +102,8 @@
       floci-az on 4577, floci-gcp on 4588 and floci-oci on 4599 need a plain ContainerBuilder.
       Same version as the module, which is where it comes from transitively anyway.
     -->
-    <PackageVersion Include="Testcontainers" Version="4.15.0" />
-    <PackageVersion Include="Testcontainers.Floci" Version="4.15.0" />
+    <PackageVersion Include="Testcontainers" Version="4.16.0" />
+    <PackageVersion Include="Testcontainers.Floci" Version="4.16.0" />
 
     <PackageVersion Include="xunit.v3" Version="4.0.1" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.0" />

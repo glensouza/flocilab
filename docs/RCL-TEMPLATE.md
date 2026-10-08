@@ -459,7 +459,7 @@ solution and the test project:
 
 ## Test skeleton — `tests/FlociLab.IntegrationTests/<Provider><Service>Tests.cs`
 
-**AWS only** gets `FlociBuilder`. `Testcontainers.Floci` 4.15.0 hardcodes port 4566 and the
+**AWS only** gets `FlociBuilder`. `Testcontainers.Floci` 4.16.0 hardcodes port 4566 and the
 `/_floci/health` path, so the other three need a plain `ContainerBuilder` with their own port and
 namespaced health path — and `IContainer` has no `GetConnectionString()`, so the endpoint is built
 from `GetMappedPublicPort`:

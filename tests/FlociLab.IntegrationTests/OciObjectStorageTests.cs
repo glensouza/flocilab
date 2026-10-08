@@ -26,7 +26,7 @@ public sealed class OciObjectStorageTests : IAsyncLifetime
     private const int FlociOciPort = 4599;
 
     // A plain ContainerBuilder rather than the FlociBuilder the S3 tests use, for the same reason
-    // the Azure and GCP tests use one: Testcontainers.Floci 4.15.0 hardcodes 4566, and floci-oci
+    // the Azure and GCP tests use one: Testcontainers.Floci 4.16.0 hardcodes 4566, and floci-oci
     // listens on 4599. The health path is namespaced too — /_floci-oci/health, not /_floci/health,
     // which 404s here and would fail the wait strategy on a perfectly healthy container.
     private readonly IContainer flociOci = new ContainerBuilder("floci/floci-oci:latest")

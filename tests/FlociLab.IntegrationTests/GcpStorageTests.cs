@@ -26,7 +26,7 @@ public sealed class GcpStorageTests : IAsyncLifetime
     private const string StorageEmulatorHostVariable = "STORAGE_EMULATOR_HOST";
 
     // A plain ContainerBuilder rather than the FlociBuilder the S3 tests use, for the same reason
-    // the Azure tests use one: Testcontainers.Floci 4.15.0 hardcodes 4566, and floci-gcp listens
+    // the Azure tests use one: Testcontainers.Floci 4.16.0 hardcodes 4566, and floci-gcp listens
     // on 4588. The health path is namespaced too — /_floci-gcp/health, not /_floci/health, which
     // 404s here and would fail the wait strategy on a perfectly healthy container.
     private readonly IContainer flociGcp = new ContainerBuilder("floci/floci-gcp:latest")
