@@ -39,6 +39,7 @@
     <PackageVersion Include="AWSSDK.APIGateway" Version="4.0.101.2" />
     <PackageVersion Include="AWSSDK.ApiGatewayV2" Version="4.0.100.16" />
     <PackageVersion Include="AWSSDK.ApiGatewayManagementApi" Version="4.0.100.17" />
+    <PackageVersion Include="AWSSDK.ApplicationAutoScaling" Version="4.0.100.16" />
     <PackageVersion Include="AWSSDK.AppSync" Version="4.0.100.17" />
     <PackageVersion Include="AWSSDK.AutoScaling" Version="4.0.104.5" />
     <PackageVersion Include="AWSSDK.CertificateManager" Version="4.0.102.8" />
