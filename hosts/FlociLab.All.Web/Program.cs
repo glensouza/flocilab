@@ -1,5 +1,4 @@
 using System.Reflection;
-using FlociLab.All.Web.Components;
 using FlociLab.Aws.AccessAnalyzer;
 using FlociLab.Aws.Acm;
 using FlociLab.Aws.Account;
@@ -46,6 +45,7 @@ using FlociLab.Azure.ServiceBus;
 using FlociLab.Comparison;
 using FlociLab.Core;
 using FlociLab.Core.Coverage;
+using FlociLab.Shell;
 using FlociLab.Gcp.Firestore;
 using FlociLab.Gcp.Kms;
 using FlociLab.Gcp.PubSub;
@@ -67,6 +67,7 @@ builder.Services.AddRazorComponents()
 // FlociLab.Comparison owns routable pages, which nothing else could tell the catalog.
 builder.Services
     .AddFlociCore(builder.Configuration)
+    .AddFlociShell(typeof(Program).Assembly, "FlociLab", "multi-cloud emulator samples")
     .AddAwsS3Demo()
     .AddAwsSqsDemo()
     .AddAwsDynamoDbDemo()

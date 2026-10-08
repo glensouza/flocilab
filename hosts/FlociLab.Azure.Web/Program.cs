@@ -1,5 +1,4 @@
 using System.Reflection;
-using FlociLab.Azure.Web.Components;
 using FlociLab.Azure;
 using FlociLab.Azure.Blob;
 using FlociLab.Azure.CosmosDb;
@@ -9,6 +8,7 @@ using FlociLab.Azure.Queue;
 using FlociLab.Azure.ServiceBus;
 using FlociLab.Core;
 using FlociLab.Core.Coverage;
+using FlociLab.Shell;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +19,7 @@ builder.Services.AddRazorComponents()
 // one line per Azure sample this host carries — each one's page, route and nav entry come with it.
 builder.Services
     .AddFlociCore(builder.Configuration)
+    .AddFlociShell(typeof(Program).Assembly, "FlociLab Azure", "Azure emulator samples")
     .AddAzureBlobDemo()
     .AddAzureQueueDemo()
     .AddAzureServiceBusDemo()

@@ -61,6 +61,7 @@
     <Project Path="src/FlociLab.Core/FlociLab.Core.csproj" />
     <Project Path="src/FlociLab.Gcp.Endpoints/FlociLab.Gcp.Endpoints.csproj" />
     <Project Path="src/FlociLab.Oci.Endpoints/FlociLab.Oci.Endpoints.csproj" />
+    <Project Path="src/FlociLab.Shell/FlociLab.Shell.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/FlociLab.IntegrationTests/FlociLab.IntegrationTests.csproj" />

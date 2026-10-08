@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <RootNamespace>FlociLab.Shell</RootNamespace>
+  </PropertyGroup>
+
+  <!--
+    The chrome every host shares: App, layout, nav, reconnect modal, router, the coverage page and
+    the error pages. One copy, so a fix to it lands in all five hosts at once (docs/BLAZOR-PLAN.md
+    §14). Core only, like FlociLab.Comparison: it never references a cloud SDK, so a per-provider
+    host stays one vendor's SDK and nothing else.
+  -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FlociLab.Core\FlociLab.Core.csproj" />
+  </ItemGroup>
+
+</Project>

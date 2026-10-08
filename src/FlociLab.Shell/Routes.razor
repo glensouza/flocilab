@@ -1,8 +1,6 @@
-@using System.Reflection
-@using FlociLab.Core.Coverage
 @inject IDemoCatalog Catalog
 
-<Router AppAssembly="typeof(Program).Assembly"
+<Router AppAssembly="typeof(App).Assembly"
         AdditionalAssemblies="@this.pageAssemblies"
         NotFoundPage="typeof(Pages.NotFound)">
     <Found Context="routeData">

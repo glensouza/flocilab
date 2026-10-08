@@ -10,6 +10,7 @@
   -->
   <ItemGroup>
     <ProjectReference Include="..\..\src\FlociLab.Core\FlociLab.Core.csproj" />
+    <ProjectReference Include="..\..\src\FlociLab.Shell\FlociLab.Shell.csproj" />
     <ProjectReference Include="..\..\samples\oci\objectstorage\FlociLab.Oci.ObjectStorage.Demo\FlociLab.Oci.ObjectStorage.Demo.csproj" />
     <ProjectReference Include="..\..\samples\oci\queue\FlociLab.Oci.Queue.Demo\FlociLab.Oci.Queue.Demo.csproj" />
     <ProjectReference Include="..\..\samples\oci\vault\FlociLab.Oci.Vault.Demo\FlociLab.Oci.Vault.Demo.csproj" />

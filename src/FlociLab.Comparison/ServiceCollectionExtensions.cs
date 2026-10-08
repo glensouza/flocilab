@@ -1,5 +1,6 @@
 using FlociLab.Comparison.Pages;
 using FlociLab.Core;
+using FlociLab.Shell;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FlociLab.Comparison;
@@ -12,7 +13,7 @@ public static class ServiceCollectionExtensions
     /// own <c>Add*Demo()</c> has already filled in, so this RCL owns no services of its own.
     ///
     /// <para>
-    /// It still has to be called, because an RCL with no <see cref="IServiceDemo"/> is invisible
+    /// It also adds the Compare links to the shared sidebar. It still has to be called, because an RCL with no <see cref="IServiceDemo"/> is invisible
     /// to the catalog's assembly discovery — the case docs/BLAZOR-PLAN.md §14 flagged.
     /// </para>
     /// </summary>
@@ -20,6 +21,9 @@ public static class ServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        return services.AddPageAssembly(typeof(ObjectStoragePage).Assembly);
+        // The links travel with the pages: one call wires both, so neither can be forgotten.
+        return services
+            .AddPageAssembly(typeof(ObjectStoragePage).Assembly)
+            .AddNavSection<CompareNav>();
     }
 }

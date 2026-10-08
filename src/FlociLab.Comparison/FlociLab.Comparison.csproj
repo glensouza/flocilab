@@ -19,6 +19,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\FlociLab.Core\FlociLab.Core.csproj" />
+    <!-- For AddNavSection: the comparison links render in the shared sidebar. Core-only too. -->
+    <ProjectReference Include="..\FlociLab.Shell\FlociLab.Shell.csproj" />
   </ItemGroup>
 
 </Project>

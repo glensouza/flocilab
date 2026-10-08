@@ -10,6 +10,7 @@
   -->
   <ItemGroup>
     <ProjectReference Include="..\..\src\FlociLab.Core\FlociLab.Core.csproj" />
+    <ProjectReference Include="..\..\src\FlociLab.Shell\FlociLab.Shell.csproj" />
     <ProjectReference Include="..\..\src\FlociLab.Azure.Endpoints\FlociLab.Azure.Endpoints.csproj" />
     <ProjectReference Include="..\..\samples\azure\blob\FlociLab.Azure.Blob.Demo\FlociLab.Azure.Blob.Demo.csproj" />
     <ProjectReference Include="..\..\samples\azure\cosmosdb\FlociLab.Azure.CosmosDb.Demo\FlociLab.Azure.CosmosDb.Demo.csproj" />

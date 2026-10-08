@@ -1,5 +1,4 @@
 using System.Reflection;
-using FlociLab.Gcp.Web.Components;
 using FlociLab.Gcp.Firestore;
 using FlociLab.Gcp.Kms;
 using FlociLab.Gcp.PubSub;
@@ -7,6 +6,7 @@ using FlociLab.Gcp.SecretManager;
 using FlociLab.Gcp.Storage;
 using FlociLab.Core;
 using FlociLab.Core.Coverage;
+using FlociLab.Shell;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +17,7 @@ builder.Services.AddRazorComponents()
 // the GCP samples this host carries — each one's page, route and nav entry all come with it.
 builder.Services
     .AddFlociCore(builder.Configuration)
+    .AddFlociShell(typeof(Program).Assembly, "FlociLab GCP", "GCP emulator samples")
     .AddGcpStorageDemo()
     .AddGcpPubSubDemo()
     .AddGcpFirestoreDemo()

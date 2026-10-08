@@ -1,9 +1,11 @@
 @inject IDemoCatalog Catalog
+@inject ShellOptions Shell
+@inject IEnumerable<NavSection> NavSections
 
 <nav class="sidebar">
     <div class="brand">
-        <a href="/">FlociLab AWS</a>
-        <span class="brand-sub">AWS emulator samples</span>
+        <a href="/">@Shell.Title</a>
+        <span class="brand-sub">@Shell.Subtitle</span>
     </div>
 
     <ul class="nav-list">
@@ -14,6 +16,11 @@
             <NavLink href="/coverage">Coverage matrix</NavLink>
         </li>
     </ul>
+
+    @foreach (NavSection section in NavSections)
+    {
+        <DynamicComponent Type="section.Component" />
+    }
 
     @foreach (ProviderDemos group in Catalog.ByProvider)
     {

@@ -35,9 +35,9 @@ using FlociLab.Aws.Sts;
 using FlociLab.Aws.StepFunctions;
 using FlociLab.Aws.Swf;
 using FlociLab.Aws.VerifiedPermissions;
-using FlociLab.Aws.Web.Components;
 using FlociLab.Core;
 using FlociLab.Core.Coverage;
+using FlociLab.Shell;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -49,6 +49,7 @@ builder.Services.AddRazorComponents()
 // come with it.
 builder.Services
     .AddFlociCore(builder.Configuration)
+    .AddFlociShell(typeof(Program).Assembly, "FlociLab AWS", "AWS emulator samples")
     .AddAwsS3Demo()
     .AddAwsSqsDemo()
     .AddAwsDynamoDbDemo()

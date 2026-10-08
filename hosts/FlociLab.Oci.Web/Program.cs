@@ -1,11 +1,11 @@
 using System.Reflection;
-using FlociLab.Oci.Web.Components;
 using FlociLab.Oci.ObjectStorage;
 using FlociLab.Oci.Queue;
 using FlociLab.Oci.Secrets;
 using FlociLab.Oci.Vault;
 using FlociLab.Core;
 using FlociLab.Core.Coverage;
+using FlociLab.Shell;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +17,7 @@ builder.Services.AddRazorComponents()
 // nav entry with it.
 builder.Services
     .AddFlociCore(builder.Configuration)
+    .AddFlociShell(typeof(Program).Assembly, "FlociLab OCI", "OCI emulator samples")
     .AddOciObjectStorageDemo()
     .AddOciQueueDemo()
     .AddOciVaultDemo()

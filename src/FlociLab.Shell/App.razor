@@ -1,3 +1,5 @@
+@inject ShellOptions Shell
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -6,8 +8,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
     <ResourcePreloader />
-    <link rel="stylesheet" href="@Assets["app.css"]" />
-    <link rel="stylesheet" href="@Assets["FlociLab.Oci.Web.styles.css"]" />
+    <link rel="stylesheet" href="@Assets["_content/FlociLab.Shell/app.css"]" />
+    <link rel="stylesheet" href="@Assets[$"{Shell.HostAssembly.GetName().Name}.styles.css"]" />
     <ImportMap />
     <HeadOutlet @rendermode="InteractiveServer" />
 </head>

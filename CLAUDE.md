@@ -49,8 +49,9 @@ dotnet list samples/aws/s3/FlociLab.Aws.S3.Demo package --include-transitive
 
 - `src/FlociLab.{Provider}.Endpoints` references only that provider's `*.Core` package, which every
   sample already pulls in transitively — so it never counts as a second SDK.
-- `hosts/FlociLab.{Provider}.Web` holds Core plus that provider's RCLs and nothing else; that is what
-  makes a sample clonable on its own.
+- `hosts/FlociLab.{Provider}.Web` holds Core, `FlociLab.Shell` (the shared chrome; Core-only) and
+  that provider's RCLs and nothing else; that is what makes a sample clonable on its own. A host's
+  own files are `Home.razor`, `_Imports.razor` and `Program.cs` — fix chrome in the shell.
 
 ### Key files to read first
 
