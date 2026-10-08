@@ -26,7 +26,7 @@ public sealed class OciObjectStorageTests : IAsyncLifetime
     private const int FlociOciPort = 4599;
 
     // A plain ContainerBuilder rather than the FlociBuilder the S3 tests use, for the same reason
-    // the Azure and GCP tests use one: Testcontainers.Floci 4.14.0 hardcodes 4566, and floci-oci
+    // the Azure and GCP tests use one: Testcontainers.Floci 4.15.0 hardcodes 4566, and floci-oci
     // listens on 4599. The health path is namespaced too — /_floci-oci/health, not /_floci/health,
     // which 404s here and would fail the wait strategy on a perfectly healthy container.
     private readonly IContainer flociOci = new ContainerBuilder("floci/floci-oci:latest")
@@ -222,7 +222,7 @@ public sealed class OciObjectStorageTests : IAsyncLifetime
     /// the client resolves every operation's URI from a realm-specific endpoint template built
     /// from the credential's region, so a client configured for the emulator sends its requests to
     /// real Oracle Cloud while <c>GetEndpoint()</c> keeps reporting the emulator. Verified on
-    /// OCI.DotNetSDK 145.0.0.
+    /// OCI.DotNetSDK 145.0.0, and still on 148.1.0 (2026-10-08).
     ///
     /// <para>
     /// The half-configured client below is what a sample following plan §7's original advice would

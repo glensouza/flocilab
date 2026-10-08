@@ -23,7 +23,7 @@ public sealed class AzureBlobTests : IAsyncLifetime
     private const int FlociAzPort = 4577;
 
     // A plain ContainerBuilder rather than the FlociBuilder the S3 tests use. Testcontainers.Floci
-    // 4.14.0 is built for floci/floci specifically: its configuration hardcodes 4566 as both the
+    // 4.15.0 is built for floci/floci specifically: its configuration hardcodes 4566 as both the
     // exposed port and the port binding, and GetConnectionString() maps that one. floci-az listens
     // on 4577, so the module would bind the wrong port and wait on a socket nothing is serving.
     private readonly IContainer flociAz = new ContainerBuilder("floci/floci-az:latest")

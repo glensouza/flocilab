@@ -16,11 +16,11 @@ namespace FlociLab.IntegrationTests;
 /// </summary>
 public sealed class AwsS3Tests : IAsyncLifetime
 {
-    // The image is explicit because Testcontainers.Floci 4.14.0 would otherwise pick
+    // The image is explicit because Testcontainers.Floci 4.15.0 would otherwise pick
     // floci/floci:1.5.13, while the AppHost and the README's Compose stack both run :latest.
     // Tests that exercise an older build than the lab does would not be the tripwire section 13
     // needs them to be, so they are pinned together. (The module's parameterless constructor is
-    // obsolete in 4.14.0 for exactly this reason.)
+    // obsolete in 4.15.0 for exactly this reason.)
     private readonly FlociContainer floci = new FlociBuilder("floci/floci:latest").Build();
 
     private S3ClientFactory factory = null!;

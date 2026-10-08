@@ -15,7 +15,8 @@ namespace FlociLab.Azure.ServiceBus;
 /// SDK client types only disable TLS and honour a custom host:port when constructed from a
 /// connection string carrying <c>UseDevelopmentEmulator=true</c> — the credential-based
 /// constructors always assume real Azure's TLS endpoint (confirmed by decompiling
-/// <c>ServiceBusConnection</c> in Azure.Messaging.ServiceBus 7.20.2). floci-az does not check the
+/// <c>ServiceBusConnection</c> in Azure.Messaging.ServiceBus 7.20.2; 7.21.0's constructors are
+/// unchanged). floci-az does not check the
 /// <c>SharedAccessKey</c> value in this mode — "Artemis runs without authentication in dev mode"
 /// per floci-az's own docs — so the placeholder key below grants nothing and is not a secret.
 /// </para>

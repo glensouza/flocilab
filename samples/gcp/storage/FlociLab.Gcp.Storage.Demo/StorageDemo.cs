@@ -32,7 +32,7 @@ namespace FlociLab.Gcp.Storage;
 ///
 /// <para>
 /// Worth recording against plan §7, which says this client ignores STORAGE_EMULATOR_HOST: on
-/// 4.15.0 it does not. <c>StorageClientBuilder</c> carries an <c>EmulatorDetection</c> property,
+/// 5.0.0 it does not. <c>StorageClientBuilder</c> carries an <c>EmulatorDetection</c> property,
 /// and <c>EmulatorOnly</c> plus that variable reaches floci-gcp on all three host spellings.
 /// The sample still uses <c>BaseUri</c> — see the factory — but the claim is stale.
 /// </para>

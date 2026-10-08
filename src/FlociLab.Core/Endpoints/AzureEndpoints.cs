@@ -156,7 +156,8 @@ public sealed class AzureEndpoints(IOptions<FlociOptions> options)
     /// <c>http://localhost:4577/devstoreaccount1</c> the SDK therefore reads "devstoreaccount1" as
     /// the container name, and every blob call lands a segment short — a container create that
     /// returns 201 followed by an upload that 404s with ContainerNotFound. Verified on
-    /// Azure.Storage.Blobs 12.29.2, 2026-08-29; see docs/BLAZOR-PLAN.md §14.
+    /// Azure.Storage.Blobs 12.29.2, 2026-08-29, and on 12.30.1, 2026-10-08; see
+    /// docs/BLAZOR-PLAN.md §14.
     /// </para>
     /// </summary>
     public string StorageConnectionString(string? accountName = null)

@@ -30,7 +30,7 @@ public static class FlociOciExtensions
             TenantId = endpoints.TenancyId,
             UserId = endpoints.UserId,
             Fingerprint = endpoints.SigningKey.Fingerprint,
-            // Takes the PEM itself, not a path — verified against 145.0.0, which parses
+            // Takes the PEM itself, not a path — verified against 148.1.0, which parses
             // ExportPkcs8PrivateKeyPem output into BouncyCastle RsaKeyParameters.
             PrivateKeySupplier = new PrivateKeySupplier(endpoints.SigningKey.PrivateKeyPem),
             // Required: RegionalClientBase's constructor calls SetRegion(provider.Region)
@@ -51,8 +51,9 @@ public static class FlociOciExtensions
     /// (<c>https://objectstorage.us-ashburn-1.{dualStack?ds.oci.:}oraclecloud.com</c>), and every
     /// operation resolves its URI from that template rather than from the endpoint. So
     /// <c>SetEndpoint</c> is silently ignored, <c>GetEndpoint()</c> keeps cheerfully reporting the
-    /// emulator address you set, and the request goes to <em>real Oracle Cloud</em>. Verified on
-    /// OCI.DotNetSDK 145.0.0: a client configured for <c>http://127.0.0.1:1</c> spent 2.0 s
+    /// emulator address you set, and the request goes to <em>real Oracle Cloud</em>. Measured on
+    /// OCI.DotNetSDK 145.0.0 (the redirect is still pinned by a test on 148.1.0): a client
+    /// configured for <c>http://127.0.0.1:1</c> spent 2.0 s
     /// reaching Ashburn and came back with a real 401 NotAuthenticated and a real
     /// <c>iad-1:</c>-prefixed opc-request-id, while floci-oci's own log stayed empty.
     /// </para>

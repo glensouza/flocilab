@@ -11,7 +11,7 @@ namespace FlociLab.Core.Endpoints;
 ///   <item>Pub/Sub, Firestore and Datastore honour <c>EmulatorDetection.EmulatorOnly</c> plus
 ///         <see cref="EmulatorHost"/> in PUBSUB_EMULATOR_HOST / FIRESTORE_EMULATOR_HOST.</item>
 ///   <item><c>Google.Cloud.Storage.V1</c> is REST/JSON, and it is the easy one — settled in
-///         Phase 1 against 4.15.0. Use <see cref="StorageBaseUri"/> with
+///         Phase 1 against 4.15.0 and unchanged on 5.0.0. Use <see cref="StorageBaseUri"/> with
 ///         <c>StorageClientBuilder { BaseUri, UnauthenticatedAccess = true }</c>. There is no
 ///         HttpClient fallback to budget for, and STORAGE_EMULATOR_HOST is not ignored either:
 ///         the builder carries an <c>EmulatorDetection</c> property, and <c>EmulatorOnly</c> plus

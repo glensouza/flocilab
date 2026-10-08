@@ -88,8 +88,9 @@ public sealed class StorageClientFactory(GcpEndpoints endpoints) : IDisposable
             // The risk register's headline worry — that Google.Cloud.Storage.V1 would ignore a
             // custom BaseUri and there would be no way to reach the emulator short of hand-rolling
             // an HttpClient over the JSON API. It does not: verified end to end on 4.15.0 against
-            // floci-gcp 0.7.0, create/upload/list/download/delete all land. The fallback in §14 is
-            // not needed and that row can close.
+            // floci-gcp 0.7.0, and again on 5.0.0 against 0.10.0 (2026-10-08): create, upload,
+            // list, download and delete all land. The fallback in §14 is not needed and that row
+            // can close.
             //
             // The trailing slash matters. The SDK appends relative paths ("b", "b/{bucket}/o") to
             // this, so dropping it addresses /storage/b instead of /storage/v1/b.

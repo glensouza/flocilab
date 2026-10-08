@@ -37,7 +37,8 @@ public sealed class IamDemo(IamClientFactory factory) : IServiceDemo
     /// ListPolicies(Scope=AWS), not ListUsers or ListRoles. A fresh account has no users or roles
     /// until this page creates one, and an empty <c>&lt;Users&gt;&lt;/Users&gt;</c> container from
     /// floci has been observed to throw a bare <see cref="NullReferenceException"/> out of
-    /// AWSSDK.IdentityManagement 4.0.103.4's own unmarshalling — reliably from a standalone client,
+    /// AWSSDK.IdentityManagement 4.0.103.4's own unmarshalling (not re-probed on 4.0.103.7) —
+    /// reliably from a standalone client,
     /// though not every time under the test host, which points to a client-side race rather than a
     /// clean, deterministic bug (verified against floci 1.7.0, 2026-09-04; see
     /// docs/BLAZOR-PLAN.md §14). Not worth a probe that only sometimes fails before the first run —

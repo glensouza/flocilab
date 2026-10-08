@@ -24,7 +24,7 @@ public sealed class GcpKmsTests : IAsyncLifetime
 
     // A plain ContainerBuilder rather than the FlociBuilder the S3/SQS tests use, for the same
     // reason GcpStorageTests, GcpPubSubTests, GcpFirestoreTests and GcpSecretManagerTests do:
-    // Testcontainers.Floci 4.14.0 hardcodes 4566, and floci-gcp listens on 4588 with its health
+    // Testcontainers.Floci 4.15.0 hardcodes 4566, and floci-gcp listens on 4588 with its health
     // path namespaced as /_floci-gcp/health.
     private readonly IContainer flociGcp = new ContainerBuilder("floci/floci-gcp:latest")
         .WithPortBinding(FlociGcpPort, assignRandomHostPort: true)
