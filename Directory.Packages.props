@@ -12,7 +12,7 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <!--
       Lets the pins below reach dependencies a cloud SDK drags in. Needed from day one:
-      OCI.DotNetSDK.Common 145.0.0 still asks for Newtonsoft.Json 12.0.3, which carries a known
+      OCI.DotNetSDK.Common still asks for Newtonsoft.Json 12.0.3, which carries a known
       high-severity advisory (GHSA-5crp-9r3c-p9vr) and fails the build under warnings-as-errors.
     -->
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
@@ -20,9 +20,9 @@
 
   <!-- FlociLab.Core — contracts only, no cloud dependencies (plan §6). -->
   <ItemGroup>
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.11" />
-    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.11" />
-    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.11" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.12" />
   </ItemGroup>
 
   <!--
@@ -34,79 +34,79 @@
     package, so no sample gains a dependency it did not already have.
   -->
   <ItemGroup>
-    <PackageVersion Include="AWSSDK.AccessAnalyzer" Version="4.0.100.14" />
-    <PackageVersion Include="AWSSDK.Account" Version="4.0.101.7" />
-    <PackageVersion Include="AWSSDK.APIGateway" Version="4.0.101" />
-    <PackageVersion Include="AWSSDK.ApiGatewayV2" Version="4.0.100.14" />
-    <PackageVersion Include="AWSSDK.ApiGatewayManagementApi" Version="4.0.100.15" />
-    <PackageVersion Include="AWSSDK.AppSync" Version="4.0.100.14" />
-    <PackageVersion Include="AWSSDK.AutoScaling" Version="4.0.104.3" />
-    <PackageVersion Include="AWSSDK.CertificateManager" Version="4.0.102.6" />
-    <PackageVersion Include="AWSSDK.CloudFront" Version="4.0.101.4" />
-    <PackageVersion Include="AWSSDK.CloudWatch" Version="4.0.104.2" />
-    <PackageVersion Include="AWSSDK.CloudWatchLogs" Version="4.0.104.1" />
-    <PackageVersion Include="AWSSDK.CognitoIdentityProvider" Version="4.0.105.3" />
-    <PackageVersion Include="AWSSDK.Core" Version="4.0.102.6" />
-    <PackageVersion Include="AWSSDK.DynamoDBv2" Version="4.0.103.5" />
-    <PackageVersion Include="AWSSDK.ElasticLoadBalancing" Version="4.0.100.14" />
-    <PackageVersion Include="AWSSDK.ElasticLoadBalancingV2" Version="4.0.101.11" />
-    <PackageVersion Include="AWSSDK.EventBridge" Version="4.0.100.12" />
-    <PackageVersion Include="AWSSDK.GlobalAccelerator" Version="4.0.100.14" />
-    <PackageVersion Include="AWSSDK.IdentityManagement" Version="4.0.103.4" />
-    <PackageVersion Include="AWSSDK.KeyManagementService" Version="4.0.100.11" />
-    <PackageVersion Include="AWSSDK.Lightsail" Version="4.0.102.1" />
-    <PackageVersion Include="AWSSDK.Organizations" Version="4.0.101.6" />
-    <PackageVersion Include="AWSSDK.Pipes" Version="4.0.100.12" />
-    <PackageVersion Include="AWSSDK.RAM" Version="4.0.100.14" />
-    <PackageVersion Include="AWSSDK.Route53" Version="4.0.100.14" />
-    <PackageVersion Include="AWSSDK.Route53Resolver" Version="4.0.100.15" />
-    <PackageVersion Include="AWSSDK.S3" Version="4.0.102.4" />
-    <PackageVersion Include="AWSSDK.Scheduler" Version="4.0.100.12" />
-    <PackageVersion Include="AWSSDK.SecretsManager" Version="4.0.100.11" />
-    <PackageVersion Include="AWSSDK.SecurityToken" Version="4.0.101" />
-    <PackageVersion Include="AWSSDK.ServiceDiscovery" Version="4.0.101.10" />
-    <PackageVersion Include="AWSSDK.SimpleNotificationService" Version="4.0.100.11" />
-    <PackageVersion Include="AWSSDK.SimpleSystemsManagement" Version="4.0.102" />
-    <PackageVersion Include="AWSSDK.SimpleWorkflow" Version="4.0.100.12" />
-    <PackageVersion Include="AWSSDK.SQS" Version="4.0.100.11" />
-    <PackageVersion Include="AWSSDK.SSOAdmin" Version="4.0.103" />
-    <PackageVersion Include="AWSSDK.StepFunctions" Version="4.0.100.13" />
-    <PackageVersion Include="AWSSDK.VerifiedPermissions" Version="4.0.100.14" />
+    <PackageVersion Include="AWSSDK.AccessAnalyzer" Version="4.0.100.16" />
+    <PackageVersion Include="AWSSDK.Account" Version="4.0.102" />
+    <PackageVersion Include="AWSSDK.APIGateway" Version="4.0.101.1" />
+    <PackageVersion Include="AWSSDK.ApiGatewayV2" Version="4.0.100.15" />
+    <PackageVersion Include="AWSSDK.ApiGatewayManagementApi" Version="4.0.100.16" />
+    <PackageVersion Include="AWSSDK.AppSync" Version="4.0.100.16" />
+    <PackageVersion Include="AWSSDK.AutoScaling" Version="4.0.104.4" />
+    <PackageVersion Include="AWSSDK.CertificateManager" Version="4.0.102.7" />
+    <PackageVersion Include="AWSSDK.CloudFront" Version="4.0.102" />
+    <PackageVersion Include="AWSSDK.CloudWatch" Version="4.0.105.1" />
+    <PackageVersion Include="AWSSDK.CloudWatchLogs" Version="4.0.105" />
+    <PackageVersion Include="AWSSDK.CognitoIdentityProvider" Version="4.0.106" />
+    <PackageVersion Include="AWSSDK.Core" Version="4.0.102.8" />
+    <PackageVersion Include="AWSSDK.DynamoDBv2" Version="4.0.107" />
+    <PackageVersion Include="AWSSDK.ElasticLoadBalancing" Version="4.0.100.15" />
+    <PackageVersion Include="AWSSDK.ElasticLoadBalancingV2" Version="4.0.101.12" />
+    <PackageVersion Include="AWSSDK.EventBridge" Version="4.0.101.1" />
+    <PackageVersion Include="AWSSDK.GlobalAccelerator" Version="4.0.101" />
+    <PackageVersion Include="AWSSDK.IdentityManagement" Version="4.0.103.7" />
+    <PackageVersion Include="AWSSDK.KeyManagementService" Version="4.0.100.15" />
+    <PackageVersion Include="AWSSDK.Lightsail" Version="4.0.102.2" />
+    <PackageVersion Include="AWSSDK.Organizations" Version="4.0.102" />
+    <PackageVersion Include="AWSSDK.Pipes" Version="4.0.100.16" />
+    <PackageVersion Include="AWSSDK.RAM" Version="4.0.100.16" />
+    <PackageVersion Include="AWSSDK.Route53" Version="4.0.100.15" />
+    <PackageVersion Include="AWSSDK.Route53Resolver" Version="4.0.100.16" />
+    <PackageVersion Include="AWSSDK.S3" Version="4.0.104.1" />
+    <PackageVersion Include="AWSSDK.Scheduler" Version="4.0.100.15" />
+    <PackageVersion Include="AWSSDK.SecretsManager" Version="4.0.100.15" />
+    <PackageVersion Include="AWSSDK.SecurityToken" Version="4.0.101.1" />
+    <PackageVersion Include="AWSSDK.ServiceDiscovery" Version="4.0.101.11" />
+    <PackageVersion Include="AWSSDK.SimpleNotificationService" Version="4.0.100.16" />
+    <PackageVersion Include="AWSSDK.SimpleSystemsManagement" Version="4.0.104.1" />
+    <PackageVersion Include="AWSSDK.SimpleWorkflow" Version="4.0.100.15" />
+    <PackageVersion Include="AWSSDK.SQS" Version="4.0.100.15" />
+    <PackageVersion Include="AWSSDK.SSOAdmin" Version="4.0.103.1" />
+    <PackageVersion Include="AWSSDK.StepFunctions" Version="4.0.100.16" />
+    <PackageVersion Include="AWSSDK.VerifiedPermissions" Version="4.0.100.15" />
     <PackageVersion Include="Azure.Identity" Version="1.21.0" />
-    <PackageVersion Include="Azure.Messaging.ServiceBus" Version="7.20.2" />
-    <PackageVersion Include="Azure.Security.KeyVault.Keys" Version="4.10.0" />
-    <PackageVersion Include="Azure.Security.KeyVault.Secrets" Version="4.11.0" />
-    <PackageVersion Include="Azure.Storage.Blobs" Version="12.29.2" />
-    <PackageVersion Include="Azure.Storage.Queues" Version="12.27.1" />
-    <PackageVersion Include="Google.Api.Gax.Grpc" Version="4.15.0" />
+    <PackageVersion Include="Azure.Messaging.ServiceBus" Version="7.21.0" />
+    <PackageVersion Include="Azure.Security.KeyVault.Keys" Version="4.10.2" />
+    <PackageVersion Include="Azure.Security.KeyVault.Secrets" Version="4.11.2" />
+    <PackageVersion Include="Azure.Storage.Blobs" Version="12.30.1" />
+    <PackageVersion Include="Azure.Storage.Queues" Version="12.28.1" />
+    <PackageVersion Include="Google.Api.Gax.Grpc" Version="4.15.1" />
     <PackageVersion Include="Google.Cloud.Firestore" Version="4.4.0" />
-    <PackageVersion Include="Google.Cloud.Kms.V1" Version="3.26.0" />
-    <PackageVersion Include="Google.Cloud.PubSub.V1" Version="3.37.0" />
+    <PackageVersion Include="Google.Cloud.Kms.V1" Version="3.27.0" />
+    <PackageVersion Include="Google.Cloud.PubSub.V1" Version="3.38.0" />
     <PackageVersion Include="Google.Cloud.SecretManager.V1" Version="2.8.0" />
-    <PackageVersion Include="Google.Cloud.Storage.V1" Version="4.15.0" />
-    <PackageVersion Include="Microsoft.Azure.Cosmos" Version="3.62.1" />
-    <PackageVersion Include="OCI.DotNetSDK.Common" Version="145.0.0" />
-    <PackageVersion Include="OCI.DotNetSDK.Keymanagement" Version="145.0.0" />
-    <PackageVersion Include="OCI.DotNetSDK.Objectstorage" Version="145.0.0" />
-    <PackageVersion Include="OCI.DotNetSDK.Queue" Version="145.0.0" />
-    <PackageVersion Include="OCI.DotNetSDK.Secrets" Version="145.0.0" />
-    <PackageVersion Include="OCI.DotNetSDK.Vault" Version="145.0.0" />
+    <PackageVersion Include="Google.Cloud.Storage.V1" Version="5.0.0" />
+    <PackageVersion Include="Microsoft.Azure.Cosmos" Version="3.63.2" />
+    <PackageVersion Include="OCI.DotNetSDK.Common" Version="148.1.0" />
+    <PackageVersion Include="OCI.DotNetSDK.Keymanagement" Version="148.1.0" />
+    <PackageVersion Include="OCI.DotNetSDK.Objectstorage" Version="148.1.0" />
+    <PackageVersion Include="OCI.DotNetSDK.Queue" Version="148.1.0" />
+    <PackageVersion Include="OCI.DotNetSDK.Secrets" Version="148.1.0" />
+    <PackageVersion Include="OCI.DotNetSDK.Vault" Version="148.1.0" />
   </ItemGroup>
 
   <!-- Testing (plan §10). A throwaway emulator per test class, so CI needs no running stack. -->
   <ItemGroup>
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.9.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
     <!--
       The bare Testcontainers builder, for the three emulator images the Floci module does not
       cover. FlociBuilder hardcodes port 4566 (verified by reflecting over its configuration), so
       floci-az on 4577, floci-gcp on 4588 and floci-oci on 4599 need a plain ContainerBuilder.
       Same version as the module, which is where it comes from transitively anyway.
     -->
-    <PackageVersion Include="Testcontainers" Version="4.14.0" />
-    <PackageVersion Include="Testcontainers.Floci" Version="4.14.0" />
-    <!-- xunit.v3 4.0.0 landed 2026-08-15; staying on the 3.x line until it has some mileage. -->
-    <PackageVersion Include="xunit.v3" Version="3.2.2" />
-    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
+    <PackageVersion Include="Testcontainers" Version="4.15.0" />
+    <PackageVersion Include="Testcontainers.Floci" Version="4.15.0" />
+
+    <PackageVersion Include="xunit.v3" Version="4.0.1" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.0" />
   </ItemGroup>
 
   <!-- Transitive pins: security fixes for versions a cloud SDK asks for. -->
