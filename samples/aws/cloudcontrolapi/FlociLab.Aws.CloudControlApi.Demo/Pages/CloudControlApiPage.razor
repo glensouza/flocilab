@@ -1,0 +1,140 @@
+@page "/aws/cloudcontrolapi"
+@inject CloudControlApiDemo Demo
+@inject CloudControlApiClientFactory Factory
+@implements IDisposable
+
+<PageTitle>Cloud Control API — FlociLab</PageTitle>
+
+<h1>Cloud Control API</h1>
+
+<p class="lede">
+    Create a bucket, a queue and a topic through one API that has no S3, SQS or SNS in it, follow
+    each request to its end, read them back as a resource tree, list what the account holds, try
+    the operations floci has not built, ask for a bucket name that is taken and for things that are
+    not there, and tear it all down. Each step shows what floci answered, including what it never
+    builds. This is <code>AWSSDK.CloudControlApi</code> used exactly as production would use it.
+</p>
+
+<dl class="facts">
+    <dt>Target</dt>
+    <dd class="target @(this.Factory.UseEmulator ? "target-emulator" : "target-real")">
+        @(this.Factory.UseEmulator ? "floci emulator" : "REAL AWS — this creates a real S3 bucket, SQS queue and SNS topic in this account and deletes them; it is slow")
+    </dd>
+    <dt>Endpoint</dt>
+    <dd><code>@this.Factory.ServiceUrl</code></dd>
+    <dt>Package</dt>
+    <dd><code>AWSSDK.CloudControlApi</code></dd>
+</dl>
+
+<div class="toolbar">
+    <button class="button" @onclick="this.RunAsync" disabled="@(this.running || !this.RendererInfo.IsInteractive)">
+        @(this.running ? "Running…" : "Run the round-trip")
+    </button>
+    @if (!this.RendererInfo.IsInteractive)
+    {
+        <span class="note">Waiting for the interactive circuit…</span>
+    }
+    else if (this.finishedAt is not null)
+    {
+        <span class="note">
+            @this.steps.Count step(s), @(this.steps.Count(s => !s.Succeeded)) failed —
+            @this.finishedAt.Value.ToLocalTime().ToString("HH:mm:ss")
+        </span>
+    }
+</div>
+
+@if (this.steps.Count == 0 && !this.running)
+{
+    <p class="empty">
+        Nothing has run yet. Every step below will show the wire-level request and what floci
+        actually answered, including the failures.
+    </p>
+}
+
+@foreach (DemoStep step in this.steps)
+{
+    <section class="step @(step.Succeeded ? "step-ok" : "step-failed")">
+        <h2>
+            @step.Title
+            <span class="badge @(step.Succeeded ? "badge-ok" : "badge-error")">
+                @(step.Succeeded ? "Ok" : "Failed")
+            </span>
+        </h2>
+
+        @if (step.Request is not null)
+        {
+            <h3>Request</h3>
+            <pre>@step.Request</pre>
+        }
+
+        @if (step.Response is not null)
+        {
+            <h3>Response</h3>
+            <pre>@step.Response</pre>
+        }
+
+        @if (step.Error is not null)
+        {
+            <h3>Error</h3>
+            <pre class="error">@step.Error</pre>
+        }
+    </section>
+}
+
+@code {
+    private readonly List<DemoStep> steps = [];
+    private readonly CancellationTokenSource cts = new();
+
+    private DateTimeOffset? finishedAt;
+    private bool running;
+    private bool disposed;
+
+    private async Task RunAsync()
+    {
+        if (this.running)
+        {
+            return;
+        }
+
+        this.running = true;
+        this.finishedAt = null;
+        this.steps.Clear();
+        this.StateHasChanged();
+
+        try
+        {
+            // Rendered as they arrive rather than collected first: seeing what the
+            // emulator answers for each step as it happens is most of the point of the page.
+            await foreach (DemoStep step in this.Demo.RunAsync(this.cts.Token))
+            {
+                this.steps.Add(step);
+                this.StateHasChanged();
+            }
+
+            this.finishedAt = DateTimeOffset.Now;
+        }
+        catch (OperationCanceledException)
+        {
+            // Navigated away mid-run. The demo's own finally has already deleted every resource
+            // this run created.
+        }
+        finally
+        {
+            this.running = false;
+
+            if (!this.disposed)
+            {
+                this.StateHasChanged();
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        this.disposed = true;
+
+        // Cancel without disposing: RunAsync may still be inside an SDK call registered on this
+        // token, and disposing underneath it throws ObjectDisposedException instead of cancelling.
+        this.cts.Cancel();
+    }
+}

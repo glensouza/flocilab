@@ -7,6 +7,7 @@ using FlociLab.Aws.ApiGatewayV2;
 using FlociLab.Aws.AppSync;
 using FlociLab.Aws.ApplicationAutoScaling;
 using FlociLab.Aws.AutoScaling;
+using FlociLab.Aws.CloudControlApi;
 using FlociLab.Aws.CloudFormation;
 using FlociLab.Aws.CloudFront;
 using FlociLab.Aws.CloudMap;
@@ -74,6 +75,7 @@ builder.Services
     .AddAwsAppSyncDemo()
     .AddAwsRoute53Demo()
     .AddAwsRoute53ResolverDemo()
+    .AddAwsCloudControlApiDemo()
     .AddAwsCloudFormationDemo()
     .AddAwsCloudFrontDemo()
     .AddAwsCloudMapDemo()

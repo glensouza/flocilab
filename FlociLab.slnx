@@ -21,6 +21,7 @@
     <Project Path="samples/aws/ssm/FlociLab.Aws.Ssm.Demo/FlociLab.Aws.Ssm.Demo.csproj" />
     <Project Path="samples/aws/codegurureviewer/FlociLab.Aws.CodeGuruReviewer.Demo/FlociLab.Aws.CodeGuruReviewer.Demo.csproj" />
     <Project Path="samples/aws/cloudformation/FlociLab.Aws.CloudFormation.Demo/FlociLab.Aws.CloudFormation.Demo.csproj" />
+    <Project Path="samples/aws/cloudcontrolapi/FlociLab.Aws.CloudControlApi.Demo/FlociLab.Aws.CloudControlApi.Demo.csproj" />
     <Project Path="samples/aws/cognito/FlociLab.Aws.Cognito.Demo/FlociLab.Aws.Cognito.Demo.csproj" />
     <Project Path="samples/aws/sts/FlociLab.Aws.Sts.Demo/FlociLab.Aws.Sts.Demo.csproj" />
     <Project Path="samples/aws/identitycenter/FlociLab.Aws.IdentityCenter.Demo/FlociLab.Aws.IdentityCenter.Demo.csproj" />
