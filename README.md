@@ -41,7 +41,7 @@ starts in roughly 24 ms and idles at about 13 MiB. Service counts below are from
 | [`floci-az`](https://github.com/floci-io/floci-az) | Azure | `4577` | 28 services — Blob, Queue, Table, Cosmos DB, Key Vault, Service Bus, Event Hubs, Functions, ARM plane |
 | [`floci-gcp`](https://github.com/floci-io/floci-gcp) | GCP | `4588` | 26 services — GCS, Pub/Sub, Firestore, Secret Manager, Cloud KMS, BigQuery, Cloud Run, GKE |
 | [`floci-oci`](https://github.com/floci-io/floci-oci) | Oracle Cloud | `4599` | 8 services — Object Storage, Identity, Queue, Streaming, KMS, Vault Secrets, Functions, OKE |
-| [`floci-ui`](https://github.com/floci-io/floci-ui) | Console | `4500` | Web console for AWS, Azure and GCP |
+| [`floci-ui`](https://github.com/floci-io/floci-ui) | Console | `4500` | Web console for AWS, Azure, GCP and OCI (OCI from 0.6.0) |
 
 ```mermaid
 flowchart TB
@@ -60,15 +60,17 @@ flowchart TB
     UI --> AWS
     UI --> AZ
     UI --> GCP
+    UI --> OCI
     SDK["Your SDKs / CLI / Terraform"] --> AWS & AZ & GCP & OCI
     P -.manages.-> cloud
     W -.updates.-> cloud
     D -.tails logs.-> cloud
 ```
 
-> **Note on the console:** `floci-ui` supports **AWS, Azure and GCP only**. There is no OCI
-> support in the console as of v0.5.0 — the OCI emulator is fully usable, but only through the
-> SDK, CLI or Terraform, not through the web UI.
+> **Note on the console:** `floci-ui` covers all four clouds from **0.6.0** (2026-10-08). Before
+> that it knew only AWS, Azure and GCP, so an older pinned image shows no OCI resources. OCI in
+> the console covers Object Storage, Identity, Queue, Streaming, Vault keys and secrets, Functions
+> and OKE; Compute, Containers and the database services are not available for OCI.
 
 ---
 
@@ -162,7 +164,7 @@ name: floci-cloud
 services:
   # =========================================================
   # Web console — serves both the UI and its API on one port.
-  # Supports AWS, Azure and GCP. OCI is not wired into the UI.
+  # Supports AWS, Azure, GCP and OCI (OCI needs floci-ui 0.6.0 or later).
   # =========================================================
   floci-ui:
     image: floci/floci-ui:latest
@@ -177,6 +179,7 @@ services:
       FLOCI_AZURE_ACCOUNT_NAME: devstoreaccount1
       FLOCI_GCP_ENDPOINT: http://floci-gcp:4588
       FLOCI_GCP_PROJECT: floci-local
+      FLOCI_OCI_ENDPOINT: http://floci-oci:4599
       AWS_REGION: us-east-1
       AWS_ACCESS_KEY_ID: test
       AWS_SECRET_ACCESS_KEY: test
@@ -186,6 +189,8 @@ services:
       floci-az:
         condition: service_healthy
       floci-gcp:
+        condition: service_healthy
+      floci-oci:
         condition: service_healthy
     networks:
       - floci
@@ -375,7 +380,7 @@ SDK call fails, tailing all four emulators side by side at
 | :--- | :--- | :--- | :--- |
 | **Portainer** | `9443` / `9000` | `https://<DEBIAN_IP>:9443` | Container management |
 | **Dozzle** | `8888` | `http://<DEBIAN_IP>:8888` | Live container logs |
-| **Floci console** | `4500` | `http://<DEBIAN_IP>:4500` | Web UI (AWS, Azure, GCP) |
+| **Floci console** | `4500` | `http://<DEBIAN_IP>:4500` | Web UI (AWS, Azure, GCP, OCI) |
 | **AWS emulator** | `4566` | `http://<DEBIAN_IP>:4566` | AWS CLI, boto3, AWS SDKs, Terraform, CDK |
 | **Azure emulator** | `4577` | `http://<DEBIAN_IP>:4577` | Azure SDKs, Storage Explorer, `azfloci` |
 | ↳ Event Hubs AMQP | `5672` | `amqp://<DEBIAN_IP>:5672` | Event Hubs SDK |
@@ -491,8 +496,8 @@ anything.
 | Event Hubs client times out | AMQP port `5672` (or Kafka `9093`) not published. |
 | Service Bus client times out | `FLOCI_AZ_SERVICES_SERVICE_BUS_MOCKED` not set to `"false"` — it defaults to management-plane-only mocked mode, so nothing ever answers on the AMQP port. |
 | Service Bus still times out after setting `MOCKED: "false"` | floci-az tore down a sidecar that once failed to start but kept polling the address it used to have (`Artemis Jolokia did not become ready at http://…:8161/console/jolokia within 120s`), and never creates a replacement — which is why `docker ps -a` shows no such container. The stale address is in memory, not on disk: **`docker restart floci-az`** fixes it, and the data volume can be left alone. |
-| Azure Functions returns `501 NotImplemented` | Known runtime gap in floci-az — the console shows Serverless as "coming soon" for Azure. |
-| No OCI resources in the web console | Expected. `floci-ui` has no OCI support; use the OCI CLI or SDK. |
+| Azure Functions returns `501 NotImplemented` | Known runtime gap in floci-az for most management routes. |
+| No OCI resources in the web console | `floci-ui` older than 0.6.0 has no OCI support: `docker pull floci/floci-ui:latest`. On 0.6.0 or later, check that `FLOCI_OCI_ENDPOINT` is set and `curl localhost:4500/api/clouds/oci/status` says `reachable`. |
 | A service returns `501` | That operation isn't implemented yet. Confirm in Dozzle, then check the upstream service matrix. |
 
 Useful log commands:

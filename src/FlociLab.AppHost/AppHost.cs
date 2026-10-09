@@ -107,9 +107,9 @@ IResourceBuilder<ContainerResource> oci = builder.AddContainer("floci-oci", "flo
     .WithHttpHealthCheck(OciHealth, endpointName: "http")
     .WithLifetime(ContainerLifetime.Persistent);
 
-// The web console. Not an emulator — it is a client of three of them, and it reaches them by
-// container name over the app network, so it needs no host ports of theirs. There is no OCI
-// support in the image, which is why floci-oci is absent below.
+// The web console. Not an emulator — it is a client of all four, and it reaches them by
+// container name over the app network, so it needs no host ports of theirs. OCI support arrived
+// in floci-ui 0.6.0; 0.5.0 knew only aws, azure and gcp.
 builder.AddContainer("floci-ui", "floci/floci-ui", "latest")
     .WithHttpEndpoint(port: 4500, targetPort: 4500, name: "http")
     .WithEnvironment("PORT", "4500")
@@ -118,6 +118,7 @@ builder.AddContainer("floci-ui", "floci/floci-ui", "latest")
     .WithEnvironment("FLOCI_AZURE_ACCOUNT_NAME", "devstoreaccount1")
     .WithEnvironment("FLOCI_GCP_ENDPOINT", "http://floci-gcp:4588")
     .WithEnvironment("FLOCI_GCP_PROJECT", "floci-local")
+    .WithEnvironment("FLOCI_OCI_ENDPOINT", "http://floci-oci:4599")
     .WithEnvironment("AWS_REGION", "us-east-1")
     .WithEnvironment("AWS_ACCESS_KEY_ID", "test")
     .WithEnvironment("AWS_SECRET_ACCESS_KEY", "test")
@@ -127,7 +128,8 @@ builder.AddContainer("floci-ui", "floci/floci-ui", "latest")
     .WithLifetime(ContainerLifetime.Persistent)
     .WaitFor(aws)
     .WaitFor(azure)
-    .WaitFor(gcp);
+    .WaitFor(gcp)
+    .WaitFor(oci);
 
 builder.AddProject<Projects.FlociLab_All_Web>("all")
     // Bound by FlociOptions. The web app runs on the host, so these resolve to localhost:45xx;
