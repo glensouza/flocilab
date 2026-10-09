@@ -35,6 +35,7 @@
     <ProjectReference Include="..\..\samples\aws\cloudformation\FlociLab.Aws.CloudFormation.Demo\FlociLab.Aws.CloudFormation.Demo.csproj" />
     <ProjectReference Include="..\..\samples\aws\cloudcontrolapi\FlociLab.Aws.CloudControlApi.Demo\FlociLab.Aws.CloudControlApi.Demo.csproj" />
     <ProjectReference Include="..\..\samples\aws\appconfig\FlociLab.Aws.AppConfig.Demo\FlociLab.Aws.AppConfig.Demo.csproj" />
+    <ProjectReference Include="..\..\samples\aws\appconfigdata\FlociLab.Aws.AppConfigData.Demo\FlociLab.Aws.AppConfigData.Demo.csproj" />
     <ProjectReference Include="..\..\samples\aws\cloudfront\FlociLab.Aws.CloudFront.Demo\FlociLab.Aws.CloudFront.Demo.csproj" />
     <ProjectReference Include="..\..\samples\aws\cloudmap\FlociLab.Aws.CloudMap.Demo\FlociLab.Aws.CloudMap.Demo.csproj" />
     <ProjectReference Include="..\..\samples\aws\elbv2\FlociLab.Aws.ElbV2.Demo\FlociLab.Aws.ElbV2.Demo.csproj" />

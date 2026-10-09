@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <RootNamespace>FlociLab.Aws.AppConfigData</RootNamespace>
+  </PropertyGroup>
+
+  <!--
+    TWO official cloud packages — a deliberate, user-approved exception to constraint 1
+    (docs/BLAZOR-PLAN.md §3, §14). AWSSDK.AppConfigData is the same package a production app would
+    reference for reading AppConfig configuration, used exactly as production would use it — the
+    only difference is the endpoint, which comes from FlociLab.Aws.Endpoints. AWSSDK.AppConfig is
+    the exception: AppConfigData only reads a configuration that has been deployed, and publishing
+    and deploying one is the AppConfig control plane. AWSSDK.Core arrives with both either way.
+
+    FrameworkReference rather than a Microsoft.AspNetCore.Components.Web package reference: this
+    RCL only ever renders server-side inside an ASP.NET Core host, so the shared framework already
+    has the components, and there is no extra version to pin.
+  -->
+  <ItemGroup>
+    <PackageReference Include="AWSSDK.AppConfigData" />
+    <PackageReference Include="AWSSDK.AppConfig" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\src\FlociLab.Core\FlociLab.Core.csproj" />
+    <ProjectReference Include="..\..\..\..\src\FlociLab.Aws.Endpoints\FlociLab.Aws.Endpoints.csproj" />
+  </ItemGroup>
+
+</Project>
