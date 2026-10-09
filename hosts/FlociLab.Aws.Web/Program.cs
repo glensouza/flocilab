@@ -11,6 +11,7 @@ using FlociLab.Aws.CloudFront;
 using FlociLab.Aws.CloudMap;
 using FlociLab.Aws.CloudWatchLogs;
 using FlociLab.Aws.CloudWatchMetrics;
+using FlociLab.Aws.CodeGuruReviewer;
 using FlociLab.Aws.Cognito;
 using FlociLab.Aws.DynamoDb;
 using FlociLab.Aws.ElasticBeanstalk;
@@ -77,6 +78,7 @@ builder.Services
     .AddAwsElbV2Demo()
     .AddAwsElbClassicDemo()
     .AddAwsGlobalAcceleratorDemo()
+    .AddAwsCodeGuruReviewerDemo()
     .AddAwsCognitoDemo()
     .AddAwsStsDemo()
     .AddAwsIdentityCenterDemo()

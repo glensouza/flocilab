@@ -46,6 +46,7 @@
     <PackageVersion Include="AWSSDK.CloudFront" Version="4.0.102.1" />
     <PackageVersion Include="AWSSDK.CloudWatch" Version="4.0.105.2" />
     <PackageVersion Include="AWSSDK.CloudWatchLogs" Version="4.0.105.1" />
+    <PackageVersion Include="AWSSDK.CodeGuruReviewer" Version="4.0.100.17" />
     <PackageVersion Include="AWSSDK.CognitoIdentityProvider" Version="4.0.106.1" />
     <PackageVersion Include="AWSSDK.Core" Version="4.0.102.9" />
     <PackageVersion Include="AWSSDK.DynamoDBv2" Version="4.0.107.1" />

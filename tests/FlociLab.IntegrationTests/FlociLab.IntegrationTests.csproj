@@ -45,6 +45,7 @@
     <ProjectReference Include="..\..\samples\aws\elbv2\FlociLab.Aws.ElbV2.Demo\FlociLab.Aws.ElbV2.Demo.csproj" />
     <ProjectReference Include="..\..\samples\aws\elbclassic\FlociLab.Aws.ElbClassic.Demo\FlociLab.Aws.ElbClassic.Demo.csproj" />
     <ProjectReference Include="..\..\samples\aws\globalaccelerator\FlociLab.Aws.GlobalAccelerator.Demo\FlociLab.Aws.GlobalAccelerator.Demo.csproj" />
+    <ProjectReference Include="..\..\samples\aws\codegurureviewer\FlociLab.Aws.CodeGuruReviewer.Demo\FlociLab.Aws.CodeGuruReviewer.Demo.csproj" />
     <ProjectReference Include="..\..\samples\aws\cognito\FlociLab.Aws.Cognito.Demo\FlociLab.Aws.Cognito.Demo.csproj" />
     <ProjectReference Include="..\..\samples\aws\sts\FlociLab.Aws.Sts.Demo\FlociLab.Aws.Sts.Demo.csproj" />
     <ProjectReference Include="..\..\samples\aws\identitycenter\FlociLab.Aws.IdentityCenter.Demo\FlociLab.Aws.IdentityCenter.Demo.csproj" />
