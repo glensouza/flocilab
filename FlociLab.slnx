@@ -29,6 +29,7 @@
     <Project Path="samples/aws/acm/FlociLab.Aws.Acm.Demo/FlociLab.Aws.Acm.Demo.csproj" />
     <Project Path="samples/aws/lightsail/FlociLab.Aws.Lightsail.Demo/FlociLab.Aws.Lightsail.Demo.csproj" />
     <Project Path="samples/aws/applicationautoscaling/FlociLab.Aws.ApplicationAutoScaling.Demo/FlociLab.Aws.ApplicationAutoScaling.Demo.csproj" />
+    <Project Path="samples/aws/elasticbeanstalk/FlociLab.Aws.ElasticBeanstalk.Demo/FlociLab.Aws.ElasticBeanstalk.Demo.csproj" />
     <Project Path="samples/aws/autoscaling/FlociLab.Aws.AutoScaling.Demo/FlociLab.Aws.AutoScaling.Demo.csproj" />
     <Project Path="samples/aws/stepfunctions/FlociLab.Aws.StepFunctions.Demo/FlociLab.Aws.StepFunctions.Demo.csproj" />
     <Project Path="samples/aws/swf/FlociLab.Aws.Swf.Demo/FlociLab.Aws.Swf.Demo.csproj" />

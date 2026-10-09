@@ -49,6 +49,7 @@
     <PackageVersion Include="AWSSDK.CognitoIdentityProvider" Version="4.0.106.1" />
     <PackageVersion Include="AWSSDK.Core" Version="4.0.102.9" />
     <PackageVersion Include="AWSSDK.DynamoDBv2" Version="4.0.107.1" />
+    <PackageVersion Include="AWSSDK.ElasticBeanstalk" Version="4.0.101.2" />
     <PackageVersion Include="AWSSDK.ElasticLoadBalancing" Version="4.0.100.16" />
     <PackageVersion Include="AWSSDK.ElasticLoadBalancingV2" Version="4.0.101.13" />
     <PackageVersion Include="AWSSDK.EventBridge" Version="4.0.101.2" />

@@ -13,6 +13,7 @@ using FlociLab.Aws.CloudWatchLogs;
 using FlociLab.Aws.CloudWatchMetrics;
 using FlociLab.Aws.Cognito;
 using FlociLab.Aws.DynamoDb;
+using FlociLab.Aws.ElasticBeanstalk;
 using FlociLab.Aws.ElbClassic;
 using FlociLab.Aws.ElbV2;
 using FlociLab.Aws.EventBridge;
@@ -106,6 +107,7 @@ builder.Services
     .AddAwsLightsailDemo()
     .AddAwsAutoScalingDemo()
     .AddAwsApplicationAutoScalingDemo()
+    .AddAwsElasticBeanstalkDemo()
     .AddAzureBlobDemo()
     .AddAzureQueueDemo()
     .AddAzureServiceBusDemo()
