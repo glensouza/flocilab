@@ -8,8 +8,8 @@ A step-by-step guide to running an all-in-one **local multi-cloud emulation lab*
 > [floci.io](https://floci.io/) and [github.com/floci-io](https://github.com/floci-io).
 
 This lab is also the foundation for **FlociLab** — a .NET sample for every service these emulators
-support, built with Blazor and Aspire. See [`docs/BLAZOR-PLAN.md`](docs/BLAZOR-PLAN.md) for the plan
-and [`docs/WORKFLOW.md`](docs/WORKFLOW.md) for how work gets built, reviewed and counted as done.
+support, built with Blazor and Aspire. See [`docs/BLAZOR-PLAN.md`](docs/BLAZOR-PLAN.md) for the design
+and [`CONTRIBUTING.md`](CONTRIBUTING.md) for what a finished sample looks like.
 
 ---
 

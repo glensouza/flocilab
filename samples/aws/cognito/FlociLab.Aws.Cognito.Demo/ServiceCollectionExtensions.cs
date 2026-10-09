@@ -16,9 +16,9 @@ public static class ServiceCollectionExtensions
     /// </code>
     ///
     /// The page, the route and the nav entry all come with it — a host adds a ProjectReference and
-    /// this line, and nothing else. There is no capability registration — the Cognito plan row names
-    /// none (docs/BLAZOR-PLAN.md §13), so it appears only in its own provider's nav, not on a
-    /// comparison page.
+    /// this line, and nothing else. There is no capability registration — the Cognito has no
+    /// capability interface, so it appears only in its own provider's nav, not on a comparison
+    /// page.
     /// </summary>
     public static IServiceCollection AddAwsCognitoDemo(this IServiceCollection services)
     {

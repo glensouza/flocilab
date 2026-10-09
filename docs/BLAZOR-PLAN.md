@@ -1,12 +1,13 @@
 # FlociLab — Blazor + Aspire Multi-Cloud Sample Plan
 
-A living plan and progress tracker for building **one .NET sample per Floci-emulated cloud service**,
+The design for building **one .NET sample per Floci-emulated cloud service**,
 composable into per-provider Blazor apps and a unified side-by-side comparison app, orchestrated by
 Aspire.
 
-**Status:** Phase 0–2 complete · Phase 3 under way · **52 / 190 services** (0 ⊘ — the last, Key Vault Keys,
-cleared 2026-10-06 when floci-az 0.14.0 shipped this project's fix) · **5 / 5 comparison pages**
-**Last updated:** 2026-10-08
+Which services are built and what comes next is not tracked here. The build backlog (model
+strategy, phases and the per-service checklists, §11-13) lives with the project's private
+workflow tooling. Section numbers are unchanged, so the code's citations of §3, §7, §10 and §14
+still land here. What each emulator actually answers today is on any host's `/coverage` page.
 
 ---
 
@@ -22,9 +23,7 @@ cleared 2026-10-06 when floci-az 0.14.0 shipped this project's fix) · **5 / 5 c
 - [8. Side-by-side comparison app](#8-side-by-side-comparison-app)
 - [9. Aspire orchestration](#9-aspire-orchestration)
 - [10. Testing strategy](#10-testing-strategy)
-- [11. Model selection and cost strategy](#11-model-selection-and-cost-strategy)
-- [12. Phases](#12-phases)
-- [13. Service checklists](#13-service-checklists)
+- 11-13. Backlog: kept outside this repo (see the note at the top)
 - [14. Risk register](#14-risk-register)
 
 ---
@@ -33,8 +32,8 @@ cleared 2026-10-06 when floci-az 0.14.0 shipped this project's fix) · **5 / 5 c
 
 ### Goals
 
-1. **A working demo of every service Floci emulates** — 190 rows in §13, eventually. floci.io lists
-   125 AWS, 28 Azure, 26 GCP and 8 OCI services (October 2026); §13 splits a few of those cards where
+1. **A working demo of every service Floci emulates** — 190 of them, eventually. floci.io lists
+   125 AWS, 28 Azure, 26 GCP and 8 OCI services (October 2026); the backlog splits a few of those cards where
    the .NET SDK ships them as separate packages.
 2. **Each service sample is independently consumable.** Someone who wants "Azure Service Bus in
    .NET" gets a project whose `.csproj` references exactly one cloud package. No AWS, no GCP, no
@@ -149,7 +148,7 @@ flowchart TB
 | Decision | Choice | Rationale |
 | :--- | :--- | :--- |
 | Render mode | **Blazor Web App, global `InteractiveServer`** | Cloud SDK calls stay server-side. Under WebAssembly you would ship four cloud SDKs to the browser (tens of MB), do SigV4 signing client-side, and fight CORS against emulators that send no CORS headers. Server mode makes all of that a non-issue. |
-| Sample unit | **Razor Class Library, one per service** | The RCL carries the page, the components and the client wrapper. Its `.csproj` references exactly one cloud SDK package. That is the blog/video artifact — clonable on its own. The single exception is a service the provider itself ships as more than one package, where one package alone cannot complete a round trip: see §14 and the OCI Secrets row in §13. A second package is never a convenience — it is a decision to take to the user, per constraint 1. |
+| Sample unit | **Razor Class Library, one per service** | The RCL carries the page, the components and the client wrapper. Its `.csproj` references exactly one cloud SDK package. That is the blog/video artifact — clonable on its own. The single exception is a service the provider itself ships as more than one package, where one package alone cannot complete a round trip: see the OCI Vault Secrets row in §14. A second package is never a convenience — it is a decision to take to the user, per constraint 1. |
 | Host apps | **Five thin hosts** | Four per-provider + one unified. Each is ~50 lines of `Program.cs` plus nav, because all content lives in the RCLs. Cheap to maintain, and it satisfies "the Azure app has no AWS references". |
 | Comparison | **Separate `FlociLab.Comparison` RCL** | Depends only on `FlociLab.Core` capability interfaces (and `FlociLab.Shell`, for its sidebar links), never on provider SDKs. Referenced only by `FlociLab.All.Web`. |
 | Cross-cloud coupling | **Capability interfaces in Core** | Provider RCLs opt in by implementing `IObjectStoreCapability` etc. Services with no analog (Textract, Bedrock) simply don't implement one and don't appear in comparison. |
@@ -223,9 +222,9 @@ Resource Groups Tagging, Service Usage.
 ```
 floci/
 ├── README.md                       # the Docker/Portainer lab (done)
+├── CONTRIBUTING.md                 # what a finished sample looks like
 ├── docs/BLAZOR-PLAN.md             # this file
 ├── docs/RCL-TEMPLATE.md            # file-by-file skeleton behind every Kind A sample
-├── docs/WORKFLOW.md                # the build -> review -> tick loop
 ├── FlociLab.slnx                   # slnx, the SDK's current default solution format
 ├── Directory.Build.props           # net10.0, nullable, warnaserror
 ├── Directory.Packages.props        # central package management — pins every SDK version
@@ -579,8 +578,8 @@ anywhere else and is the strongest content hook.
 
 **Coverage matrix page** (`/coverage`) is the other unified-app-only feature: calls `ProbeAsync`
 on every registered demo in parallel and renders a live grid of Ok / NotImplemented / Unreachable. It is
-useful from day one, before a single demo is written, and it is how the checklists in section 13
-stay honest.
+useful from day one, before a single demo is written, and it is how the service checklists stay
+honest.
 
 ---
 
@@ -678,475 +677,11 @@ is not the tripwire the checklists need it to be. There is no Testcontainers mod
 
 Rules:
 
-- A demo is **not** checked off in section 13 until its integration test passes.
+- A demo is **not** checked off as done until its integration test passes.
 - Probe tests are allowed to assert `NotImplemented` — that is a legitimate, documented outcome
   (Azure Functions today). Assert the *expected* status, so the test fails loudly when upstream
   starts implementing it. That is how the coverage matrix stays truthful.
 - Kind B artifacts get a build-and-deploy test, not just an invoke test.
-
----
-
-## 11. Model selection and cost strategy
-
-You review with Opus before merge, so the goal is to get each PR to *reviewable* quality as
-cheaply as possible.
-
-| Work | Model | Why |
-| :--- | :--- | :--- |
-| **Phase 0**: Core contracts, capability interfaces, the four endpoint factories, Aspire AppHost, the first RCL template | **Opus 5** | One-time, high-leverage, expensive to unwind. The GCP transport problem and the Azure three-plane credential story are genuine design work. Everything downstream copies these decisions — get them right once. |
-| **Phases 2–4**: each service demo once the template exists | **Sonnet 5** | Pattern-following against a fixed template and a documented SDK. This is ~90% of total volume, so it dominates cost. Sonnet is the right default here. |
-| **Scaffolding**: `.csproj` files, folder skeletons, DI registration lines, nav entries, checklist updates, table regeneration | **Haiku 4.5** | Mechanical and compiler-verified. Cheapest thing that works. |
-| **Escalation**: a service where Sonnet stalls twice — usually a GCP transport or Azure ARM shape problem | **Opus 5** | Escalate on stall, not preemptively. |
-| **Pre-merge review** | **Opus 5** via `/code-review` | Your existing workflow. |
-
-### Practical cost rules
-
-1. **Batch 3–5 services per session, then start a fresh one.** Context is the dominant cost driver
-   and it grows superlinearly across a long session. This plan file exists so a fresh cheap session
-   can resume with no re-derivation.
-2. **Never start a service in Opus.** Start in Sonnet; escalate only after two genuine failed
-   attempts. Most services are ~150 lines against a documented API.
-3. **Front-load the hard ones in Phase 1 while you're in Opus anyway.** GCS, Service Bus AMQP and
-   OCI signing are the three that will teach you the most per token.
-4. **Let the compiler and the integration test do the verification**, not another model pass.
-5. **Don't spawn subagents for this work.** Each one starts cold and re-derives context you already
-   have. The `/next` and `/ship` skills are designed for inline execution.
-
-### Rough allocation
-
-| Phase | Volume | Model mix |
-| :--- | :--- | :--- |
-| 0 — spine | ~10 files | Opus 90% / Haiku 10% |
-| 1 — first slice (4 services) | ~20 files | Opus 60% / Sonnet 40% |
-| 2 — big five (20 services) | ~80 files | Sonnet 80% / Haiku 15% / Opus 5% |
-| 3 — bulk fill (~100 services) | ~400 files | Sonnet 75% / Haiku 20% / Opus 5% |
-| 4 — container-backed | ~30 files | Sonnet 60% / Opus 40% |
-
----
-
-## 12. Phases
-
-### Phase 0 — The spine ☑
-
-No service demos at all. Ship the skeleton.
-
-- [x] `FlociLab.slnx`, `Directory.Build.props`, `Directory.Packages.props`
-- [x] `FlociLab.Core` — `IServiceDemo`, `ProbeResult`, `DemoStep`, 5 capability interfaces
-- [x] `FlociLab.AppHost` — Aspire, 4 emulator containers with `WaitFor`
-- [x] `FlociLab.All.Web` — Blazor Web App, global `InteractiveServer`
-- [x] `/coverage` page — probes everything registered, renders the live matrix
-- [x] The four endpoint factories (AWS, Azure, GCP, OCI) with config binding
-- [x] `dotnet run` on AppHost brings up 4 emulators + 1 web app, all green
-
-**Exit criteria:** the coverage page loads and shows four reachable emulators with zero demos
-registered. **Met 2026-08-29** — all four report `Ok` in ~2.2 s against floci 1.7.0, floci-az,
-floci-gcp 0.7.0 and floci-oci 0.3.0, with the demo table showing "No demos registered".
-
-### Phase 1 — One vertical slice, all four clouds ☑
-
-Object storage only. **Deliberately front-loads every hard endpoint problem at once.**
-
-- [x] `FlociLab.Aws.S3.Demo` (RCL + `IObjectStoreCapability` + test)
-- [x] `FlociLab.Azure.Blob.Demo`
-- [x] `FlociLab.Gcp.Storage.Demo` ← was billed **the risky one**; it was the easiest of the three
-- [x] `FlociLab.Oci.ObjectStorage.Demo`
-- [x] `FlociLab.Comparison` + the object-storage comparison page
-- [x] The four per-provider host apps
-- [x] The RCL template + this skill, both proven by four real uses
-
-**Exit criteria:** one page shows the same upload/list/download across four clouds, and you know
-exactly how hard GCS and OCI are going to be. **Met 2026-08-30** — `/comparison/object-storage`
-renders all four columns, and the hard parts are recorded: GCP was the easiest of the three, OCI's
-`SetEndpoint` silently reaches real Oracle Cloud, and Azure needs an IPv4 literal for path-style.
-
-### Phase 2 — The big five per provider ☑
-
-The ~20 services that cover most of what anyone actually tries: storage (done in Phase 1), queue,
-document DB, secrets, key management. Each gets a capability implementation, so all five comparison
-pages light up.
-
-- [x] Queues — SQS · Queue Storage + Service Bus · Pub/Sub · OCI Queue
-- [x] Document DB — DynamoDB · Cosmos DB NoSQL · Firestore — **no OCI analog, by design** (§8)
-- [x] Secrets — Secrets Manager · Key Vault Secrets · Secret Manager · OCI Vault Secrets
-- [x] Key management — KMS · Key Vault Keys · Cloud KMS · OCI Vault + KMS
-- [x] All five comparison pages render (§13)
-
-**Exit criteria:** every provider that has an analog implements all five capability interfaces, and
-all five comparison pages render. **Met 2026-09-04** — 20 services across the five capabilities,
-finishing with `/comparison/key-management`. Three of the twenty were ⊘ at the time: floci-az
-implemented neither Queue Storage nor any `/keys` route, and its Key Vault `/secrets` route was
-broken in two separate ways (§14). Their samples, pages and tests still shipped, which is what let
-those comparison columns render an honest red rather than a gap. **Updated 2026-09-28:** floci-az
-0.13.0 fixed both Key Vault Secrets gaps — see §14 and the Key Vault Secrets row in §13, now ☑.
-Queue Storage was never an emulator gap: the queue endpoint pointed at Blob's path, and with the
-`-queue` suffix floci-az serves it end to end (§14, now ☑). **Updated 2026-10-06:** Key Vault Keys,
-the last ⊘, is ☑. This project filed floci-az #348 and opened PR #349, merged and released in 0.14.0
-(§14).
-
-### Phase 3 — Bulk fill ◐
-
-The remaining ~100 Kind A and Kind C services, one PR per category, using the skill. This is where
-the cost strategy matters most.
-
-**Started 2026-09-04.** Everything ticked after the five comparison pages belongs here, not to a
-Phase 2 leftover: AWS IAM, SSM, EventBridge and EventBridge Pipes. There is no per-item checklist
-in this section because §13 *is* the checklist — **`/next` picks the first ☐ row there**, working
-down a provider's tables in order. Rows already resolved as ⊘ are done, not pending, and Kind B
-rows belong to Phase 4; skip both.
-
-### Phase 4 — Container-backed services ☐
-
-Lambda, RDS, ECS, EKS, MWAA, Cloud Run, GKE, AKS, ACI, OCI Functions, OKE. They need the Docker
-socket, they are slow, and they are the flakiest. Feature-flag them off by default so the rest of
-the app stays fast.
-
----
-
-## 13. Service checklists
-
-Legend: ☐ not started · ◐ in progress · ☑ demo + test passing · ⊘ emulator returns 501
-
-Per service: **RCL** (page + wrapper) · **T** (integration test) · **C** (capability, where an
-analog exists).
-
-### AWS — `floci` :4566 — 35/125
-
-Rows follow the service cards on [floci.io/aws](https://floci.io/aws/), split only where the .NET
-SDK splits the package (constraint 1): EventBridge/Pipes/Scheduler, SES v1/v2, Bedrock/Runtime,
-AppConfig/AppConfigData and CUR/BCM Data Exports are one card each there and two or three rows
-here. DynamoDB Streams stays in the DynamoDB row — same package. Kind B marks every service floci.io flags as
-running a real engine in Docker, which is what makes it Phase 4. Re-synced against floci 2.2.0,
-2026-10-06, which added six cards: Data Lifecycle Manager, Timestream for InfluxDB, DMS, Redshift
-Serverless, SageMaker and CodeArtifact.
-
-<details open>
-<summary><strong>Core app services (8/9)</strong></summary>
-
-| ☐ | Service | Kind | Capability |
-|:-:|:---|:---|:---|
-| ☑ | S3 | A | `IObjectStore` |
-| ☑ | SQS | A | `IQueue` |
-| ☑ | SNS | A | — |
-| ☑ | DynamoDB | A | `IDocumentDb` |
-| ☐ | Lambda | B | — |
-| ☑ | IAM | C | — |
-| ☑ | KMS | A | `IKeyManagement` |
-| ☑ | Secrets Manager | A | `ISecretStore` |
-| ☑ | SSM | A | — |
-</details>
-
-<details>
-<summary><strong>Events and workflows (7/7)</strong></summary>
-
-| ☐ | Service | Kind |
-|:-:|:---|:---|
-| ☑ | EventBridge | A |
-| ☑ | EventBridge Pipes | A |
-| ☑ | EventBridge Scheduler | A |
-| ☑ | Step Functions | A |
-| ☑ | SWF | A |
-| ☑ | CloudWatch Logs | A |
-| ☑ | CloudWatch Metrics | A |
-</details>
-
-<details>
-<summary><strong>API, networking and edge (10/10)</strong></summary>
-
-| ☐ | Service | Kind |
-|:-:|:---|:---|
-| ☑ | API Gateway REST | A |
-| ☑ | API Gateway v2 (HTTP + WebSocket) | A |
-| ☑ | AppSync | A |
-| ☑ | Route 53 | A |
-| ☑ | Route 53 Resolver | C |
-| ☑ | CloudFront | C |
-| ☑ | Cloud Map | A |
-| ☑ | ELB v2 | C |
-| ☑ | ELB Classic | C |
-| ☑ | Global Accelerator | C |
-</details>
-
-<details>
-<summary><strong>Identity and access (9/9)</strong></summary>
-
-| ☐ | Service | Kind |
-|:-:|:---|:---|
-| ☑ | STS | A |
-| ☑ | Cognito | A |
-| ☑ | IAM Identity Center | C |
-| ☑ | IAM Access Analyzer | C |
-| ☑ | Organizations | C |
-| ☑ | Resource Access Manager | C |
-| ☑ | AWS Account | C |
-| ☑ | Verified Permissions | A |
-| ☑ | ACM | A |
-</details>
-
-<details>
-<summary><strong>Containers and compute (3/10)</strong></summary>
-
-| ☐ | Service | Kind |
-|:-:|:---|:---|
-| ☐ | ECS | B |
-| ☐ | EC2 | B |
-| ☑ | Lightsail | A |
-| ☐ | EKS | B |
-| ☐ | ECR | B |
-| ☐ | AWS Batch | B |
-| ☐ | Lambda MicroVMs | B |
-| ☑ | Auto Scaling | C |
-| ☑ | Application Auto Scaling | C |
-| ☐ | Elastic Beanstalk | C |
-</details>
-
-<details>
-<summary><strong>Developer tools and delivery (0/9)</strong></summary>
-
-| ☐ | Service | Kind |
-|:-:|:---|:---|
-| ☐ | CodeBuild | B |
-| ☐ | CodeDeploy | B |
-| ☐ | CodePipeline | B |
-| ☐ | CodeGuru Reviewer | A |
-| ☐ | CloudFormation | C |
-| ☐ | Cloud Control API | C |
-| ☐ | AppConfig | A |
-| ☐ | AppConfigData | A |
-| ☐ | CodeArtifact | B |
-</details>
-
-<details>
-<summary><strong>Storage, transfer and backup (0/7)</strong></summary>
-
-| ☐ | Service | Kind |
-|:-:|:---|:---|
-| ☐ | S3 Tables | A |
-| ☐ | S3 Vectors | A |
-| ☐ | EFS | C |
-| ☐ | DataSync | C |
-| ☐ | Transfer Family | A |
-| ☐ | AWS Backup | C |
-| ☐ | Data Lifecycle Manager | A |
-</details>
-
-<details>
-<summary><strong>Databases and caching (0/11)</strong></summary>
-
-| ☐ | Service | Kind |
-|:-:|:---|:---|
-| ☐ | RDS | B |
-| ☐ | RDS Data API | B |
-| ☐ | Neptune | B |
-| ☐ | DocumentDB | B |
-| ☐ | MemoryDB | B |
-| ☐ | ElastiCache | B |
-| ☐ | Redshift | B |
-| ☐ | Redshift Data API | B |
-| ☐ | Redshift Serverless | B |
-| ☐ | Timestream for InfluxDB | B |
-| ☐ | DMS | A |
-</details>
-
-<details>
-<summary><strong>Messaging and streaming (0/9)</strong></summary>
-
-| ☐ | Service | Kind |
-|:-:|:---|:---|
-| ☐ | SES (v1) | A |
-| ☐ | SES v2 | A |
-| ☐ | Kinesis | A |
-| ☐ | Data Firehose | A |
-| ☐ | MSK | B |
-| ☐ | Amazon MQ | B |
-| ☐ | IoT Core | A |
-| ☐ | Amazon Connect | A |
-| ☐ | AppIntegrations | A |
-</details>
-
-<details>
-<summary><strong>Analytics (0/8)</strong></summary>
-
-| ☐ | Service | Kind |
-|:-:|:---|:---|
-| ☐ | Athena | B |
-| ☐ | Glue | A |
-| ☐ | EMR | C |
-| ☐ | EMR Serverless | C |
-| ☐ | Managed Service for Apache Flink | B |
-| ☐ | OpenSearch | B |
-| ☐ | Lake Formation | C |
-| ☐ | MWAA (Airflow) | B |
-</details>
-
-<details>
-<summary><strong>AI and ML (0/9)</strong></summary>
-
-| ☐ | Service | Kind |
-|:-:|:---|:---|
-| ☐ | Bedrock | A |
-| ☐ | Bedrock Runtime | A |
-| ☐ | Bedrock AgentCore | A |
-| ☐ | Textract | A |
-| ☐ | Transcribe | A |
-| ☐ | Comprehend | A |
-| ☐ | Rekognition | A |
-| ☐ | Translate | A |
-| ☐ | SageMaker | B |
-</details>
-
-<details>
-<summary><strong>Security and compliance (0/10)</strong></summary>
-
-| ☐ | Service | Kind |
-|:-:|:---|:---|
-| ☐ | WAF v2 | C |
-| ☐ | Network Firewall | C |
-| ☐ | GuardDuty | C |
-| ☐ | Security Hub | C |
-| ☐ | Detective | C |
-| ☐ | Inspector | C |
-| ☐ | Macie | C |
-| ☐ | CloudHSM v2 | C |
-| ☐ | CloudTrail | A |
-| ☐ | AWS Config | C |
-</details>
-
-<details>
-<summary><strong>Monitoring and observability (0/3)</strong></summary>
-
-| ☐ | Service | Kind |
-|:-:|:---|:---|
-| ☐ | CloudWatch RUM | A |
-| ☐ | Managed Prometheus | A |
-| ☐ | CloudWatch OAM | C |
-</details>
-
-<details>
-<summary><strong>Governance and management (0/7)</strong></summary>
-
-| ☐ | Service | Kind |
-|:-:|:---|:---|
-| ☐ | Resource Groups Tagging API | C |
-| ☐ | Resource Explorer 2 | C |
-| ☐ | Service Catalog | C |
-| ☐ | Service Quotas | C |
-| ☐ | Control Tower | C |
-| ☐ | Control Catalog | C |
-| ☐ | AWS FIS | C |
-</details>
-
-<details>
-<summary><strong>Cost and billing (0/7)</strong></summary>
-
-| ☐ | Service | Kind |
-|:-:|:---|:---|
-| ☐ | Pricing | A |
-| ☐ | Cost Explorer | A |
-| ☐ | AWS Budgets | A |
-| ☐ | BCM Pricing Calculator | A |
-| ☐ | Cost and Usage Reports | B |
-| ☐ | BCM Data Exports | B |
-| ☐ | AWS Marketplace | A |
-</details>
-
-### Azure — `floci-az` :4577 — 6/31
-
-[floci.io/az](https://floci.io/az/) lists 28 services. Three more rows here: Key Vault is one card
-but three packages (Secrets, Keys, Certificates), and Cosmos DB's non-NoSQL APIs each need their own
-driver. Re-synced against floci-az 0.13.0, 2026-09-28.
-
-| ☐ | Service | Kind | Capability | Notes |
-|:-:|:---|:---|:---|:---|
-| ☑ | Blob Storage | A | `IObjectStore` | connection string, **IPv4-literal host** (§7). `GetAccountInfo`, container metadata/ACL and server-side copy ⊘ 501; snapshot works since floci-az 0.13.0 (501 on 0.11.0). `DeleteIfExists` on a container that never existed answers 202/true where real Azure answers 404/false |
-| ☑ | Queue Storage | A | `IQueue` | Served under **`/{account}-queue`**, not the bare account path. Recorded ⊘ from 2026-08-31 to 2026-09-28 as "floci-az does not implement Queue Storage" — a misdiagnosis: this repo's connection string pointed the queue endpoint at Blob's path, so `CreateQueue` reached the Blob handler (501) and `ListQueues` got a Blob container listing back (§14). The suffix was in floci-az's README throughout. Fixed in `AzureEndpoints.StorageConnectionString`; the round trip is green and `AzureQueueTests` pins the wrong address as well as the right one |
-| ☐ | Table Storage | A | — | Served under `/{account}-table` (already in `StorageConnectionString`) — probed 2026-09-28: `POST /devstoreaccount1-table/Tables` → 201 and the table lists. OData filters, batch |
-| ☑ | Cosmos DB (NoSQL) | A | `IDocumentDb` | always-on, no Docker. Account served at a **`-cosmos` suffixed path** off the Blob/Queue port; signature not verified (a garbage `Authorization` header still answers 200). `Gateway` mode + `LimitToEndpoint` are both required (§14). Needs an explicit `Newtonsoft.Json` reference or the SDK's own targets hard-error |
-| ☐ | Cosmos DB — MongoDB / Cassandra / Gremlin / PostgreSQL APIs | B | — | Docker-backed engines (MongoDB Community, ScyllaDB, TinkerPop, Citus), each reached through a different driver — likely several samples, and each driver has to count as the official SDK for constraint 1. Settle that before building |
-| ☐ | Azure SQL Database | B | — | ARM + SQL Server container |
-| ☐ | PostgreSQL Flexible Server | B | — | ARM + `postgres` container |
-| ☐ | MySQL Flexible Server | B | — | ARM + MySQL container — new since the plan was written |
-| ☐ | MariaDB Server | B | — | ARM + MariaDB container — new since the plan was written |
-| ☐ | Azure Cache for Redis | B | — | ARM + optional Redis container |
-| ☐ | Azure Functions | B | — | floci.io lists HTTP/Timer triggers. The admin surface answers 501 `Only /admin/apps/... is supported` outside `/admin/apps/`, verified 2026-09-28 — probe the real route before building |
-| ☐ | Virtual Machines | C | — | ARM; Docker optional |
-| ☐ | Azure Kubernetes Service | B | — | real k3s or mock |
-| ☐ | Container Registry | B | — | ARM + shared `registry:2` |
-| ☐ | Container Instances | C | — | ARM; Docker optional |
-| ☐ | Container Apps | B | — | ARM + ingress proxy — new since the plan was written |
-| ☐ | API Management | C | — | gateway + policy subset, `/{account}-apim/` |
-| ☐ | Virtual Network | C | — | |
-| ☐ | Event Hubs | A | — | **AMQP :5672** / Kafka :9093; partitions emulated since 0.13.0 |
-| ☑ | Service Bus | A | `IQueue` | Two planes, two clients from one package: `ServiceBusAdministrationClient` (entity CRUD, plain HTTP on the port Blob/Queue/Cosmos share) and `ServiceBusClient` (**AMQP 1.0 :5673**, an Artemis sidecar floci-az launches through the Docker socket). Emulator mode cannot use `Credential()` the way Key Vault does — both client types only drop TLS and honour a custom host:port when built from a `UseDevelopmentEmulator=true` connection string. Needs `FLOCI_AZ_SERVICES_SERVICE_BUS_MOCKED=false`, and the AppHost must **not** publish 5673 itself: the sidecar binds that host port directly, so publishing it too makes the sidecar's own bind fail (§14). `DeleteQueue` was ⊘ 501 through floci-az 0.12.0 (a bare queue-name DELETE was routed to the Blob handler); **routed since 0.13.0**, found 2026-09-28 when the tripwire test failed — the round trip is now green end to end (§14) floci-az 0.13.0 reported `DeliveryCount: 2` on a first delivery where real Service Bus reports 1. 0.14.0 fixed it (floci-az #314, "restore zero-based AMQP delivery counts"), and `AzureServiceBusTests` now pins `DeliveryCount: 1`, confirmed 2026-10-06 |
-| ☐ | Communication Services Email | A | — | inspection mailbox |
-| ☐ | Event Grid | A | — | webhook delivery + retry, CloudEvents |
-| ☐ | SignalR | A | — | ASP.NET Core hubs in Default mode — new since the plan was written |
-| ☐ | Microsoft Entra ID | C | — | OAuth2 / OIDC, JWKS-verifiable JWTs |
-| ☐ | Managed Identity | C | — | **IMDS token endpoint** — already what every Key Vault sample authenticates through |
-| ☐ | Microsoft Graph | C | — | narrow `/v1.0` slice: service principals, group membership |
-| ☑ | Key Vault Secrets | A | `ISecretStore` | Split from Keys because `Azure.Security.KeyVault.Secrets`/`.Keys` are separate packages (constraint 1). The SDK refuses bearer tokens over floci-az's plain HTTP with no override — worked around in `FlociAzureExtensions.AllowInsecureBearerToken` (§14). Was ⊘ through floci-az 0.12.0 (`ListSecrets` misrouted, `attributes.nbf`/`exp` sent as JSON `null`) — **both fixed in 0.13.0**, confirmed 2026-09-28 by the sample's own integration tests, which were written as the tripwire for this (§14). Demo, page and tests now assert the real round trip, including that the purge leaves nothing in the deleted-secrets list |
-| ☑ | Key Vault Keys | A | `IKeyManagement` | Was ⊘ from 2026-09-01 to 2026-10-06. Through floci-az 0.12.0 every `/keys` route 404'd. 0.13.0 routed them but misrouted the SDK's trailing-slash `GET keys/` and sent `attributes.nbf`/`exp` as JSON `null`. **floci-az 0.14.0 fixed both, via floci-az PR #349 from this project** (issue #348, §14). With create working, a third behaviour surfaced: every key id comes back on `https://{account}.vault.azure.net/keys/…` (hardcoded in floci-az, not echoed from the request), so `KeyVaultKeysClientFactory.CreateCryptographyClient` re-addresses the id's path at the emulator in emulator mode (§14). Round trip, re-runs and capability green, 2026-10-06 |
-| ☐ | Key Vault Certificates | A | — | `Azure.Security.KeyVault.Certificates`, a third package (constraint 1). Self-signed lifecycle since 0.13.0; needs the same insecure-bearer workaround as its two siblings (§14) |
-| ☐ | Monitor / Log Analytics | A | — | KQL subset |
-| ☐ | App Configuration | A | — | labels, feature flags; `/{account}-appconfig`, and the SDK insists on HTTPS |
-
-### GCP — `floci-gcp` :4588 — 5/26
-
-One row per card on [floci.io/gcp](https://floci.io/gcp/). Re-synced against floci-gcp 0.10.0,
-2026-10-06, which added Compute Engine.
-
-| ☐ | Service | Kind | Capability | Transport |
-|:-:|:---|:---|:---|:---|
-| ☑ | Cloud Storage (GCS) | A | `IObjectStore` | REST — no gRPC, risk retired, see §7. floci-gcp 0.8.0 added a gRPC v2 surface the REST SDK does not use; 0.9.0 enforces the non-empty-bucket 409 and bucket-name validation (§14) |
-| ☑ | Pub/Sub | A | `IQueue` | gRPC + REST — first gRPC service, risk retired, see §14 |
-| ☑ | Firestore | A | `IDocumentDb` | gRPC |
-| ☐ | Datastore | A | — | HTTP/protobuf |
-| ☑ | Secret Manager | A | `ISecretStore` | gRPC |
-| ☑ | Cloud KMS | A | `IKeyManagement` | gRPC |
-| ☐ | IAM | C | — | REST |
-| ☐ | IAM Service Account Credentials | C | — | REST |
-| ☐ | OAuth 2.0 Token | C | — | REST, JWT-bearer grant — new since the plan was written |
-| ☐ | STS | C | — | REST, token exchange — new since the plan was written |
-| ☐ | Firebase Auth (Identity Platform) | A | — | REST |
-| ☐ | Managed Kafka | B | — | REST + Redpanda |
-| ☐ | Eventarc | A | — | gRPC + REST |
-| ☐ | GKE | B | — | REST, host-routed, k3s; node pools modelled since 0.9.0 |
-| ☐ | Compute Engine | C | — | REST; persistent control plane, new in 0.10.0 |
-| ☐ | Cloud Run | B | — | REST, Docker-backed; Jobs, Instances and Worker Pools v2 added in 0.10.0 |
-| ☐ | Cloud Functions | B | — | REST, control plane |
-| ☐ | Cloud Tasks | A | — | gRPC v2, not dispatched |
-| ☐ | Cloud Scheduler | A | — | gRPC + REST |
-| ☐ | Cloud SQL (PostgreSQL / MySQL) | B | — | REST + database container |
-| ☐ | BigQuery | A | — | REST; GoogleSQL runs on a DuckDB engine since 0.10.0 (DML, DDL, views, INFORMATION_SCHEMA, load jobs, Storage Read/Write over gRPC) |
-| ☐ | Cloud Logging | A | — | gRPC + REST |
-| ☐ | Cloud Monitoring | A | — | gRPC + REST |
-| ☐ | Service Usage | C | — | REST, LRO |
-| ☐ | Cloud Resource Manager | C | — | REST |
-| ☐ | Operations | C | — | gRPC + REST long-running operations — new since the plan was written |
-
-### OCI — `floci-oci` :4599 — 4/8
-
-> Not represented in the Floci web console at all — floci-ui 0.5.0's own service table has AWS, Azure
-> and GCP columns only. Highest-novelty samples in the repo. One row per card on
-> [floci.io/oci](https://floci.io/oci/); re-synced against floci-oci 0.4.2, 2026-10-06 (no service changes).
-
-| ☐ | Service | Kind | Capability | Notes |
-|:-:|:---|:---|:---|:---|
-| ☐ | Identity (IAM) | C | — | compartments, users, groups, policies, work requests |
-| ☑ | Object Storage | A | `IObjectStore` | multipart, PARs, batch delete (0.4.0). `fields` on ListObjects honoured since 0.4.x — ignored on 0.3.0 (§14) |
-| ☑ | Queue | A | `IQueue` | Two clients: `QueueAdminClient` (control) + `QueueClient` (data). `CreateQueue`/`DeleteQueue` are asynchronous — 202 + `opc-work-request-id`, waited on with `Waiters.ForWorkRequest`. `messagesEndpoint` is reported from the emulator's own config, not the request (§14) |
-| ☐ | Streaming | A | — | partitioned log, cursors, groups |
-| ☑ | Vault + KMS | A | `IKeyManagement` | Three clients: `KmsVaultClient` (control plane) + `KmsManagementClient` (keys) + `KmsCryptoClient` (encrypt/decrypt), the last two addressed at the per-vault `managementEndpoint`/`cryptoEndpoint` `CreateVault` hands back. `CreateVault` answers before `ACTIVE`, waited on with `Waiters.ForVault`. Nothing is ever deleted — key and vault are only *scheduled* for deletion, which is real Vault behaviour, not a floci quirk. floci-oci reports the per-vault endpoints from its own config rather than the request, so it does not host-route (§14) |
-| ☑ | Secrets | A | `ISecretStore` | **Two SDK packages, a deliberate and documented exception to constraint 1 (§3, §14)** — real OCI splits the service into a control plane (`Oci.VaultService.VaultsClient`, `OCI.DotNetSDK.Vault`: create/update/list/schedule-deletion) and a data plane (`Oci.SecretsService.SecretsClient`, `OCI.DotNetSDK.Secrets`: `GetSecretBundle`, the only way to read a value), and neither package contains the other's operations. `CreateSecret` hard-requires a `vaultId` and a `keyId`, so the vault and key arrive as configuration (`Floci:Oci:VaultId`, `Floci:Oci:KeyId`) rather than being provisioned — that is what keeps the third package, `OCI.DotNetSDK.Keymanagement`, out of the sample, and it is how production reaches a vault anyway. Unset OCIDs fail the `CreateSecret` step by name rather than reaching floci-oci as an opaque `MissingParameter` 400. Unlike the vault, `CreateSecret` answers `ACTIVE` with no `CREATING` state to poll |
-| ☐ | Functions | B | — | Fn Project sidecar |
-| ☐ | Container Engine (OKE) | B | — | real k3s sidecar |
-
-### Comparison pages — 5/5
-
-- [x] Object storage — S3 · Blob · GCS · OCI Object Storage
-- [x] Queues — SQS · Queue Storage + Service Bus · Pub/Sub · OCI Queue — shipped 2026-09-04. Five columns: Azure contributes two, so the run is keyed on the capability instance, not the provider slug. Queue Storage is ⊘/red throughout (§14) and Service Bus's `DeleteQueue` yields 501 (§14); the other three are green end to end. **Amended 2026-09-04, shipping Secrets:** the cleanup fix in §14's cloned-postconditions row applies here too — Queue Storage's `DeleteQueue` now renders 501 *Not implemented* where it previously rendered *Skipped*, because cleanup no longer waits on a successful create. Episode 026 was filmed before that change; its shownotes carry the correction **Amended 2026-09-28:** both Azure reds are gone. Queue Storage was mis-addressed, not unimplemented — with the `-queue` path its column is green end to end — and floci-az 0.13.0 routes Service Bus's `DeleteQueue` (§14). All five columns should now render green
-- [x] Secrets — Secrets Manager · Key Vault · Secret Manager · OCI Vault Secrets — shipped 2026-09-04. Four columns, four operations: `SetSecret` is itself the create, so there is no separate create row — but only Azure's is a single-call upsert, and AWS, GCP and OCI each synthesise one from two or three calls, which is what makes the unconditional cleanup below load-bearing. AWS and GCP are green end to end. **Azure was red throughout, and correctly so, through floci-az 0.12.0** — Key Vault Secrets was a fully-broken sample against floci-az (§14: `attributes.nbf`/`exp` sent as JSON `null`, and `GET secrets/` read as a secret named ""), so the comparison page reproduced its demo page exactly. **floci-az 0.13.0 fixed both, confirmed 2026-09-28** — Azure's column is now backed by a capability whose own round-trip test passes (`AzureKeyVaultSecretsTests.SecretStore_Capability_RoundTrips`), so it should render green end to end too. **OCI's set fails by name** on unset `Floci:Oci:VaultId`/`KeyId` — the knowingly-accepted cost recorded in §14's two-package row, not a defect — and Get is skipped while Delete is attempted and honestly red
-- [x] Document DB — DynamoDB · Cosmos NoSQL · Firestore — shipped 2026-09-04. Three columns, five operations, and the first comparison page that is green end to end on every column — no OCI analog, by design (§8). Review found the two postconditions the clone had not re-derived, both recorded in §14: "Round-trip matched" was claimed over a non-null check rather than over the payload, and Firestore's collection delete — a ListDocuments loop, since there is no DeleteCollection RPC — returned successfully having removed nothing, which would have painted GCP green beside a red AWS and Azure for the identical failed run
-- [x] Key management — KMS · Key Vault · Cloud KMS · OCI Vault — shipped 2026-09-04. Four columns, five operations, and the last of the five comparison pages. AWS, GCP and OCI are green end to end; **Azure is red at Create and List**, and correctly so — floci-az answers `404 Resource not found` to both `keys/{name}/create` and `keys/`, the same fully-broken Key Vault the Secrets page reproduces (§14) — so Encrypt, Decrypt and Delete are honestly skipped. Review found three postconditions the clone had not re-derived, all recorded in §14: the Encrypt cell rendered a green "154 byte(s) encrypted" over floci's `kms:v2:` envelope, which is not encryption at all; the List assertion compared ids in a shape Key Vault can never satisfy; and one column's `OperationCanceledException` discarded every other column's finished result — a bug this page shared with all four already-shipped comparison pages, and now fixed in all five. **Amended 2026-09-28:** since floci-az 0.13.0 the `404 Resource not found` above is gone — `/keys` routes, and `CreateKey` now creates the key and then fails client-side on `attributes.nbf`/`exp` sent as `null` (§14). the demo's `ListKeys` (trailing-slash misroute) and `CreateKey` (null attributes) both still fail, so Azure's column stays red. Because Azure's create now lands server-side before its reply fails to parse, this page leaked one Azure key per run — its cleanup only deletes a key whose id came back from create, which never happens. **Fixed 2026-09-28 without touching `IKeyManagementCapability`:** Key Vault addresses keys by name, so `KeyVaultKeyManagement.CreateKeyAsync` undoes a failed create by name before rethrowing — only when the create may have landed, never on an answered status (nothing was created, and undoing a 409 would purge a key the call never made) or an unreachable vault. That also closes the navigate-away-mid-create leak for Azure's column; AWS, GCP and OCI still carry it, because their keys are not addressed by the name the page generates. Pinned by `AzureKeyVaultKeysTests.Capability_CreateKey_That_Fails_Leaves_No_Key_Behind` **Amended again 2026-09-28:** floci 2.1.0 seals AWS ciphertext with AES-GCM, so the envelope the Encrypt cell was built to expose is gone — AWS now reads "N byte(s) of ciphertext" like GCP and OCI, and a recoverable blob fails the cell outright instead of warning, matching both KMS demo pages (§14) **Amended 2026-10-06:** floci-az 0.14.0 shipped this project's Key Vault Keys fix (§14), so Azure's column should now be green end to end, making all four columns green. The `CreateKeyAsync` undo-by-name stays: a cancelled create can still land without a reply.
 
 ---
 
@@ -1186,7 +721,7 @@ One row per card on [floci.io/gcp](https://floci.io/gcp/). Re-synced against flo
 | **`Azure.Security.KeyVault.*` refuses a bearer token over plain HTTP, with no override, and floci-az has no TLS port** | Every Key Vault sample would be unbuildable-as-functional: the SDK's own `ChallengeBasedAuthenticationPolicy` throws `InvalidOperationException` before a byte reaches the wire, for real Azure's own security reasons that do not apply to a loopback emulator | Found building Key Vault Secrets, 2026-09-01. Confirmed by decompiling Azure.Core 1.55.0 and Azure.Security.KeyVault.Secrets 4.11.0 (their only `Insecure` string is a log message for a blocked HTTPS-to-HTTP redirect; re-checked on Azure.Core 1.62.0 and Secrets 4.11.2, 2026-10-08) and by reading `ChallengeBasedAuthenticationPolicy.cs` on GitHub: `if (message.Request.Uri.Scheme != Uri.UriSchemeHttps) throw ...` guards both the first request and the 401-challenge retry, with no constructor flag or switch. floci-az exposes 4577 (HTTP), 5672/5673 (AMQP) and 9093 (Kafka) — nothing TLS. `FlociAzureExtensions.AllowInsecureBearerToken` works around it without ever putting a token on a real wire unencrypted: a `PerCall` policy rewrites the request URI to `https` before the SDK's own check runs (covering every leg of the challenge retry, since a `PerCall` policy wraps the whole thing), and a custom `HttpPipelineTransport` rewrites it back to `http` as the last step, immediately before the real socket connects — Transport is unconditionally the innermost step, so there is no ordering ambiguity. Guarded by `endpoints.UseEmulator`; real Azure never takes this path. A second, narrower check bit right behind it: `ChallengeBasedAuthenticationPolicy` also verifies the challenge's resource matches the request host, and floci-az's IMDS token names the real Azure audience (`https://vault.azure.net`) against a `127.0.0.1` request — `SecretClientOptions.DisableChallengeResourceVerification = true` (a real, documented SDK flag, unlike the TLS check) turns that off. Both are set in `KeyVaultSecretsClientFactory`/`KeyVaultKeysClientFactory`, only when `UseEmulator` is true. **`UseEmulator` alone is not a sufficient guard, and review caught that:** `Floci:Azure:Endpoint` is free-form config, and `Credential()` deliberately yields to an authority host something else already set — so on an Azure VM or AKS pod that already exports `AZURE_POD_IDENTITY_AUTHORITY_HOST`, an "emulator" endpoint pointed at a non-loopback host would put a *real* managed-identity token on a cleartext wire leaving the machine, which is precisely the leak the SDK check exists to prevent. `AllowInsecureBearerToken` therefore takes the endpoint and throws unless it is loopback, failing safe rather than defeating the check. |
 | **floci-az's Key Vault Secrets are unusable even once authenticated** | Key Vault Secrets ships as a fully broken demo despite the SDK working correctly and floci-az's own health check passing | Found immediately after fixing the TLS/challenge issue above, 2026-09-01, by reading floci-az's own access log (`docker logs`) against what a hand-rolled `curl` had shown working. Two separate gaps, both confirmed against floci-az directly: (1) `GetPropertiesOfSecretsAsync` (list) sends `GET secrets/` — a trailing slash, which the real SDK always sends for this call — and floci-az's router reads the empty segment after it as a secret *name*, answering 404 `SecretNotFound` instead of listing; `curl`ing `GET /secrets` **without** the trailing slash returns the correct `{"value":[],"nextLink":null}`, so this is a router gap specific to the shape the SDK actually sends, not a general list failure. (2) Every operation that returns a secret body — `SetSecret`, `GetSecret`, the delete response — throws `System.InvalidOperationException: The requested operation requires an element of type 'Number', but the target element has type 'Null'.` because floci-az serialises unset `attributes.nbf`/`attributes.exp` as JSON `null` rather than omitting them, and the SDK's model reads them as a required Unix-timestamp number. `KeyVaultSecretsDemo.ProbeAsync` therefore reports `ProbeStatus.Error`. `AzureKeyVaultSecretsTests` pins both failure shapes as the tripwire for the day either lands upstream. **Resolved 2026-09-28:** floci-az 0.13.0 (released 2026-09-15; confirmed as the current `floci/floci-az:latest`) fixed both — `ListSecrets` now lists correctly and `nbf`/`exp` are omitted rather than sent as `null`. The tripwire tests fired exactly as designed (`Assert.False(s.Succeeded, ...)` failing because every step now succeeds) and have been rewritten to assert the real round trip; `KeyVaultSecretsDemo`, its page and its XML docs no longer describe either gap. Shipped ☑ 2026-09-28. Review found the leak test could not fail: it compared only the live list, which a soft-deleted secret drops out of whether or not the purge ran, so it now compares the deleted-secrets list too. |
 | ~~**floci-az's Key Vault router does not implement `/keys` at all**~~ **Retired 2026-10-06** | Key Vault Keys ships as a fully broken demo, distinct in shape from both the Secrets gap above and Queue Storage's | Found building Key Vault Keys, 2026-09-01: every `/keys` route (list, create, get) answers a plain 404 `{"error":{"code":"BadRequest","message":"Resource not found: keys..."}}`, with no `x-ms-error-code: NotImplemented` header — a different shape from the storage plane's clean 501 for a genuinely unrouted path (confirmed by comparing against `GET /totallybogus/path`, which does answer 501). `KeyVaultKeysDemo.Classify` therefore reports `ProbeStatus.Error`, not `NotImplemented` — an honest read of what floci-az actually said, not an invented mapping. `AzureKeyVaultKeysTests` pins the full failing round trip. Verified against floci-az, 2026-09-01. **Partially superseded 2026-09-28:** floci-az 0.13.0 added real `/keys` routing — `CreateKey` no longer 404s, confirmed against the current `floci/floci-az:latest`. It now fails the way Secrets did before 0.13.0, with both of that row's bugs: `GetPropertiesOfKeysAsync`'s trailing-slash `GET keys/` answers `KeyNotFound` for a key named `""`, and every key body carries unset `attributes.nbf`/`attributes.exp` as JSON `null`. Neither is fixed on the Keys plane yet. An unauthenticated `curl /keys` now answers a real `401` bearer challenge, as real Key Vault does, where it used to 404. `AzureKeyVaultKeysTests.CreateKey_Throws_Because_Nbf_And_Exp_Are_Null_Not_Omitted` replaces the old 404 tripwire. Key Vault Keys stays ⊘. **Review, 2026-09-28, caught what the new failure shape did to cleanup:** the demo gated cleanup on the key id from `CreateKey`'s response, which was fine while the route 404'd — but a create that now lands server-side and then fails to parse left a key behind in the lab's persistent volume on every run, with no step to say so. `KeyVaultKeysDemo` now claims the key for cleanup before the call, as Secrets already did. The delete response carries the same null attributes, so cleanup is a visible red step rather than a silent leak. **Measured 2026-09-28:** the soft delete does land before its reply fails to parse — a `GetKey` afterwards answers 404 — and `PurgeDeletedKey`, which returns no body, answers 200. So `KeyVaultKeyCleanup` purges even when the delete's reply could not be read, reporting that failure rather than swallowing it: the step stays red and the key is actually gone, which the round-trip test now asserts through `GetKey` and `GetDeletedKey` both answering 404. **Fixed in floci-az 0.14.0 by this project's PR #349** (issue #348, filed 2026-09-28, merged 2026-10-03, released 2026-10-06). The PR mirrored #279/#280, which had fixed the same two bugs for secrets: the `keys`/`deletedkeys` list checks now use the slash-normalised route, and unset `nbf`/`exp` are omitted. It added Java tests and a .NET `sdk-test-dotnet` compatibility test that failed 4 of 5 on 0.13.0. All four `AzureKeyVaultKeysTests` tripwires fired on the first run against 0.14.0, and the class now pins the round trip. The 0.13.0 cleanup workaround (tolerating an unparseable delete reply) is removed: real Key Vault never sends one. |
-| **OCI Vault Secrets cannot be built from one SDK package** | Constraint 1 — one official cloud SDK package per sample — is the rule that makes every sample clonable and blog-ready, so the first sample to break it sets the precedent for the ~20 services still to come | Found in review of the OCI Secrets sample, 2026-09-03. Three separate claims, all verified rather than assumed. (1) `CreateSecret` hard-requires both a `vaultId` and a `keyId`: floci-oci 0.3.0 answers `400 {"code":"MissingParameter","message":"Missing required parameter: vaultId"}`, then the same for `keyId` once a vault is supplied — curl, 2026-09-02. (2) The operations really are split across packages, confirmed by inspecting the 145.0.0 assemblies directly, and the 148.1.0 ones on 2026-10-08: `CreateSecret`/`ListSecrets`/`UpdateSecret`/`ScheduleSecretDeletion` exist only in `OCI.DotNetSDK.Vault`, `GetSecretBundle` — the only way to read a secret's decrypted value — only in `OCI.DotNetSDK.Secrets`, and `CreateVault`/`CreateKey` only in `OCI.DotNetSDK.Keymanagement`. A sample carrying one of the first two could create a secret it could not read, or read one it could not create. (3) There is therefore **no one-package shape for this service**, which makes it different in kind from the Azure Key Vault case in §13, where Keys and Secrets are two independent services that split cleanly into two samples. **The decision, taken by the user on 2026-09-03, is two packages, not three:** the sample carries `.Vault` + `.Secrets` and takes the vault and key OCIDs from configuration (`Floci:Oci:VaultId`, `Floci:Oci:KeyId`) instead of provisioning them with `.Keymanagement`. That is also the honest production shape — a vault and a master encryption key are long-lived infrastructure Terraform provisions once, not something an application creates at run time. **The cost, accepted knowingly:** the sample is no longer runnable on a fresh emulator without a vault provisioned elsewhere, which is a real dent in the standalone-clonability constraint 1 exists to protect. Mitigated by making the gap self-explaining rather than opaque — `SecretsClientFactory.TryGetTarget` fails the `CreateSecret` step by name, telling the reader which setting is unset and that the OCI Vault page creates both, instead of letting an unset OCID reach floci-oci as a bare `MissingParameter` 400. `OciSecretsTests.Unconfigured_Vault_Fails_The_CreateSecret_Step_By_Name` pins that, and `SecretStore_Capability_Creates_No_Vault_Of_Its_Own` pins that the capability provisions nothing — the assertion that keeps the third package out. **The rule for the services still to come: a second package is never a convenience or a shortcut. It requires the provider itself to ship the service across packages such that no single one completes a round trip, it is the user's decision and not the model's, and it lands in this register with the probe and assembly evidence before the sample is ticked.** |
+| **OCI Vault Secrets cannot be built from one SDK package** | Constraint 1 — one official cloud SDK package per sample — is the rule that makes every sample clonable and blog-ready, so the first sample to break it sets the precedent for the ~20 services still to come | Found in review of the OCI Secrets sample, 2026-09-03. Three separate claims, all verified rather than assumed. (1) `CreateSecret` hard-requires both a `vaultId` and a `keyId`: floci-oci 0.3.0 answers `400 {"code":"MissingParameter","message":"Missing required parameter: vaultId"}`, then the same for `keyId` once a vault is supplied — curl, 2026-09-02. (2) The operations really are split across packages, confirmed by inspecting the 145.0.0 assemblies directly, and the 148.1.0 ones on 2026-10-08: `CreateSecret`/`ListSecrets`/`UpdateSecret`/`ScheduleSecretDeletion` exist only in `OCI.DotNetSDK.Vault`, `GetSecretBundle` — the only way to read a secret's decrypted value — only in `OCI.DotNetSDK.Secrets`, and `CreateVault`/`CreateKey` only in `OCI.DotNetSDK.Keymanagement`. A sample carrying one of the first two could create a secret it could not read, or read one it could not create. (3) There is therefore **no one-package shape for this service**, which makes it different in kind from the Azure Key Vault case, where Keys and Secrets are two independent services that split cleanly into two samples. **The decision, taken by the user on 2026-09-03, is two packages, not three:** the sample carries `.Vault` + `.Secrets` and takes the vault and key OCIDs from configuration (`Floci:Oci:VaultId`, `Floci:Oci:KeyId`) instead of provisioning them with `.Keymanagement`. That is also the honest production shape — a vault and a master encryption key are long-lived infrastructure Terraform provisions once, not something an application creates at run time. **The cost, accepted knowingly:** the sample is no longer runnable on a fresh emulator without a vault provisioned elsewhere, which is a real dent in the standalone-clonability constraint 1 exists to protect. Mitigated by making the gap self-explaining rather than opaque — `SecretsClientFactory.TryGetTarget` fails the `CreateSecret` step by name, telling the reader which setting is unset and that the OCI Vault page creates both, instead of letting an unset OCID reach floci-oci as a bare `MissingParameter` 400. `OciSecretsTests.Unconfigured_Vault_Fails_The_CreateSecret_Step_By_Name` pins that, and `SecretStore_Capability_Creates_No_Vault_Of_Its_Own` pins that the capability provisions nothing — the assertion that keeps the third package out. **The rule for the services still to come: a second package is never a convenience or a shortcut. It requires the provider itself to ship the service across packages such that no single one completes a round trip, it is the user's decision and not the model's, and it lands in this register with the probe and assembly evidence before the sample is ticked.** |
 | **floci-oci does not host-route OCI Vault's per-vault management/crypto endpoints** | A `CreateKey` or `Encrypt`/`Decrypt` call racing a second vault's creation could land in the wrong vault, with no error to signal it | Real OCI Vault addresses `KmsManagementClient`/`KmsCryptoClient` at the `managementEndpoint`/`cryptoEndpoint` a specific vault's `CreateVault` hands back — a different host per vault, the same shape OCI Queue uses for a queue's `messagesEndpoint` (see the OCI Queue row in §7). floci-oci reports those endpoints as `http://{FLOCI_OCI_HOSTNAME}:4599` regardless of which vault asked — falling back to the literal `localhost` when that variable is unset, and ignoring the `Host` header entirely, exactly as it does for a queue's `messagesEndpoint`. Under the lab, which leaves that variable unset on purpose, every vault therefore reports `http://localhost:4599`. **An earlier draft of this row and of `VaultClientFactory`'s remarks said `http://floci-oci:4599`, which was wrong the same way the OCI Queue draft was wrong** — probed against the lab's long-running container, which still carried `FLOCI_OCI_HOSTNAME=floci-oci`, instead of a fresh one. Re-probed against a fresh floci-oci 0.3.0 container all three ways during the ship, 2026-09-02, and corrected. The rule from the Queue row holds and is now twice-earned: probe a fresh container. `VaultClientFactory.CreateManagement`/`.CreateCrypto` override the reported value with `ForFloci` the same way `QueueClientFactory.CreateData` does, so every plane lands on the same emulator address no matter which vault it was built for. Real OCI's `CreateKeyDetails` carries no `VaultId` field at all — which vault a key belongs to is implicit in which host received the request — so with every plane multiplexed onto one port, floci-oci has no signal left to route by and falls back to associating a new key with whichever vault was created most recently. Verified by curl against floci-oci 0.3.0, 2026-09-02: two vaults live at once, a `CreateKey` naming neither landed in the second (most recently created) one. Safe for `VaultDemo`'s and `OciVault`'s own sequential create-vault-then-create-key flow, where at most one vault is ever "most recent" at a time; a concurrent capability call racing a demo run is the one shape that could still land a key in the wrong vault. `OciVaultTests.CreateKey_Routes_To_The_Most_Recently_Created_Vault_When_Two_Are_Alive` pins the behaviour so a future floci-oci that starts host-routing (or starts rejecting an ambiguous `CreateKey`) fails the test loudly rather than the routing silently changing underneath the sample. **Review, 2026-09-02, asked whether plain sequencing is already enough to break this** — `OciVault` reuses its fixed `flocilab` vault instead of creating one, so a demo run's newer vault would capture the capability's next `CreateKey` with no concurrency involved. Tested, and it does not: `VaultDemo` schedules its own vault for deletion in its `finally`, so no newer *ACTIVE* vault outlives a run. That makes the demo's cleanup load-bearing for the capability's correctness, which was not previously obvious — `OciVaultTests.Capability_Lists_Its_Own_Key_After_A_Demo_Run` pins it, so removing that cleanup fails a test rather than silently redirecting the capability's keys. Belt and braces on top: `OciVault.ListKeysAsync` deliberately applies no client-side `VaultId` filter, because in real OCI the management endpoint already *is* the vault selector, and on floci-oci such a filter would hide a mis-routed key from the very list that created it. |
 | **floci-az's Service Bus AMQP sidecar cannot bind its own port when the AppHost also publishes it** | The AMQP data plane never accepts a connection, on every run, with no signal beyond a bare transport failure — the kind of gap that looks like "the emulator doesn't support this yet" rather than a one-line config mistake | Found building the Service Bus sample, 2026-09-03. Unlike Event Hubs' Artemis sidecar, Service Bus defaults to **mocked mode** (`FLOCI_AZ_SERVICES_SERVICE_BUS_MOCKED=true`): the management plane answers, but no Artemis container is started and the AMQP port never listens — floci-az's own `docs/services/service-bus.md` documents this. Setting `MOCKED=false` fixed that, but the AMQP connection still refused: `docker logs` showed the Artemis sidecar (`floci-az-servicebus-default`) failing to start with `"Bind for 127.0.0.1:5673 failed: port is already allocated"`, retried and failing identically on every entity-management call. Cause: `AppHost.cs` published port 5673 on the **floci-az container itself** (`.WithEndpoint(port: 5673, ...)`), but floci-az's own process never listens there — on first use it launches Artemis via the mounted Docker socket, and Artemis binds host port 5673 **directly**, not through floci-az's port mapping. Two processes wanting the same host port, one of which Aspire had already claimed. Fixed by removing the AppHost's own 5673 endpoint for floci-az and letting the Artemis sidecar own the bind, plus `FLOCI_AZ_SERVICES_SERVICE_BUS_START_ON_BOOT=true` (though as of floci-az 0.11.0 the startup banner still reports `(on-demand)` and the sidecar starts lazily on the first management call regardless — harmless to leave set for when a future version honours it). **Event Hubs' AMQP port (5672) is still published on the floci-az container and has not been probed against this failure mode** — no sample uses it yet, but the first one that does should check whether Event Hubs' sidecar wants to self-publish too. Verified end to end against a rebuilt floci-az 0.11.0 container, 2026-09-03: `docker logs` showed `ServiceBusNamespaceManager` reaching `Service Bus namespace 'default' ready`, and `Azure.Messaging.ServiceBus` 7.20.2 (and 7.21.0 in the 2026-10-08 suite) completed a real send/receive/complete round trip over AMQP. The sidecar publishes on **all interfaces**, not loopback — `docker inspect` of a live one, 2026-09-03, reports `HostIp: ""` for container port `5672/tcp` (resolving to `0.0.0.0` and `::`) plus `5671`→configured-port+1 and the Jolokia console on a random port — so the README's `amqp://<DEBIAN_IP>:5673` row is still correct for a remote lab. The `Bind for 127.0.0.1:5673` in the failure above is Docker naming the *existing* Aspire-published binding it collided with, not the sidecar's own request. **A floci-az that has already failed to start the sidecar never recovers on its own, even once the port conflict is gone.** Verified on the lab's long-running AppHost container, 2026-09-03, with the fix above already in place: every subsequent management call answers 201 and then logs `Artemis Jolokia did not become ready at http://172.18.0.7:8161/console/jolokia within 120s`, while `docker ps -a` shows no such container and `docker network inspect` shows nothing holding that IP — floci-az re-polls the dead sidecar's remembered address forever and never attempts a replacement. The integration tests are immune because each run gets a fresh container. **The stale address is held in memory, not in the `flocilab-az-data` volume, so `docker restart` on the `floci-az` container is the whole fix** — no volume needs destroying. Confirmed on the lab, 2026-09-03: after the restart the very next management call logged `Starting Artemis broker for Service Bus namespace 'default' (plain:5,673, TLS:5,674)` and then `Service Bus namespace 'default' ready: amqp:172.18.0.7:5672`, with the sidecar publishing `5672`→`5673` and `5671`→`5674`. The restart log also names the cause — `Stopped Artemis container for Service Bus namespace 'default'` — floci-az had already torn the dead sidecar down while its namespace manager went on polling the address it used to have, which is why `docker ps -a` showed nothing to explain the timeout. Shipping the AppHost fix therefore does not on its own repair a lab that hit the conflict; that lab needs one restart. |
 | **One provider's `OperationCanceledException` discards every other provider's finished column** | The comparison pages exist to put four columns side by side; a page that renders *none* of them after doing all the work looks hung rather than broken, which is the failure mode hardest to diagnose on camera | Found in review shipping the Key management comparison page, 2026-09-04, and **present in all five pages** — so it dates from `ObjectStoragePage` and was copied forward four times. `TimeAsync` deliberately lets an `OperationCanceledException` escape so the `finally` can still clean up on `CancellationToken.None`; that exception then propagates out of `RunOneAsync`, faults `Task.WhenAll`, and is swallowed by `RunAsync`'s `catch (OperationCanceledException)` **before `this.results` is assigned** — so every other column's completed row is discarded and the page resets to "Nothing has run yet" with no error and nothing rendered. The comment called it "navigated away mid-run", which is only one of its causes and is what kept the rest invisible — the wrong-justification failure mode this section already records twice: several SDKs report their **own client-side timeout** as an `OperationCanceledException` subtype rather than a `TimeoutException` (Cosmos throws `CosmosOperationCanceledException`; any `HttpClient` timeout is a `TaskCanceledException`), so one slow provider blanks the entire table. This is the same on-screen symptom as the stale-container Service Bus stall in the Queues row above, reached by a second and entirely unrelated route — which is why that one was diagnosed as purely an emulator fault. Fixed in all five pages with `RunOneGuardedAsync`, which contains a cancellation to its own column and returns null rather than a row of `Skipped` cells (the run was abandoned, not decided); the assignment loop skips nulls, so the columns that finished still render. The outer catch stays as a backstop for a cancellation raised outside any column, and now says so. |
@@ -1222,14 +757,3 @@ One row per card on [floci.io/gcp](https://floci.io/gcp/). Re-synced against flo
 | **floci 2.1.0's Verified Permissions evaluates real Cedar, but in a sidecar container it starts through the Docker socket** | A Kind A sample that is not always-on: with no socket mounted the first `CreatePolicy` fails `Failed to call Cedar sidecar for policy parsing: java.net.SocketException`, while `ListPolicyStores` and `CreatePolicyStore` still answer. A fresh host also waits ~75 s while floci pulls `floci/floci:latest-cedar` | Found 2026-10-06. The sidecar is named `floci-cedar` with no per-run suffix, so like Service Bus's Artemis it is a Docker-host singleton that outlives the emulator; `AwsVerifiedPermissionsTests` mounts the socket, forces it up in `InitializeAsync` and removes it only if the run started it. The AppHost already mounts the socket for floci, so the lab needs nothing; a bare Compose stack without it gets the error above. Decisions are real Cedar: default-deny, determining policies reported, an applicable `forbid` beats any `permit`, and `UpdatePolicy` refuses to change effect/principal/resource scope. A non-Cedar statement is `ValidationException` (a JNI parser message, not AWS's wording). `AWSSDK.VerifiedPermissions` was held at 4.0.100.14 until the 2026-10-08 package refresh moved `AWSSDK.Core` to 4.0.102.8, which let it take 4.0.100.15. **Found in review, 2026-10-06:** cleanup trusted the id from the `CreatePolicyStore` response, so a store whose response was lost (page disposed mid-call) leaked, and a create the server refused still produced a failed "id unknown" cleanup step; it now finds the run's stores by their unique `flocilab-<suffix>` description through `ListPolicyStores` (floci returns `description` there, probed). `ListPolicies` no longer blames itself for a forbid whose response was lost. The test class records the sidecar as its own before the warm-up rather than after, so a warm-up that throws still removes it, and fails setup with the cause when the warm-up's steps fail. |
 | **floci's Auto Scaling validates almost nothing, and a group above zero starts a real EC2 container** | The sample keeps `MinSize`, `DesiredCapacity` and the group at zero so it needs no Docker; anything above zero makes floci's 10-second reconciler call `RunInstances`, which is a Phase 4 service. It uses a launch configuration (what floci documents) rather than a launch template, which would need `AWSSDK.EC2` and break constraint 1 | Probed by curl against floci 2.2.0, 2026-10-07, and pinned by `AwsAutoScalingTests` as three tripwires: floci creates a group whose `MinSize` exceeds `MaxSize`, creates one that names a launch configuration that does not exist, and deletes a launch configuration a group still uses — real AWS answers `ValidationError`, `ValidationError` and `ResourceInUse`. A duplicate group name is refused (`AlreadyExists`) as on AWS. Real AWS also refuses `CreateLaunchConfiguration` outright for accounts created after 2024-10-01, so the page does not run against a new real account as written. `AWSSDK.AutoScaling` was held at 4.0.104.3 until the 2026-10-07 SDK refresh moved `AWSSDK.Core` to 4.0.102.8, which let it take 4.0.104.4. **Found in review, 2026-10-07:** the size-range tripwire asked for `MinSize = 3, MaxSize = 2`; floci accepts it, sets the desired capacity to 3, and with the Docker socket mounted (as the AppHost does) its reconciler started three real EC2 containers within ten seconds. It now sends `1..0` with `DesiredCapacity = 0`, still invalid on AWS, and floci launches nothing. A force delete terminates the containers. The duplicate-name create also sends `DesiredCapacity = 0`, `ResumeProcesses` is now checked rather than only printed, and the launch configuration read-back no longer throws a bare LINQ error when the list is empty. |
 | **floci's Application Auto Scaling has no scheduled actions, accepts a minimum above the maximum, and registers a target for a resource that does not exist** | The sample cannot show scheduled scaling, and a page that works on floci fails against real AWS, which looks the table up and answers `ValidationException` | Probed by curl against floci 2.2.0, 2026-10-08, and pinned by `AwsApplicationAutoScalingTests` as tripwires: `PutScheduledAction`, `DescribeScheduledActions` and `DeleteScheduledAction` answer HTTP 400 `UnsupportedOperation` (not 501, so `Classify` treats that code as not-implemented); `MinCapacity = 10, MaxCapacity = 1` is accepted; a made-up DynamoDB table id registers. Registering, target-tracking policies (which create two CloudWatch alarms), the Describe calls, and Deregister work; deregistering a target that is gone answers `ObjectNotFoundException` as AWS does. `AWSSDK.ApplicationAutoScaling` 4.0.100.16. **Found in review, 2026-10-08:** the scheduled action had a fixed name and no cleanup, so the day floci builds it every run would leave one behind; it is now named per run and deleted first, with `UnsupportedOperation` read as nothing to remove. Against real AWS the min-above-max step took any `ValidationException` as the range refusal, though the missing table draws one too; only a refusal about capacity counts now. Cleanup deleted the run's policy whenever any policy was listed, and the policy step never read back its name, metric or target value; both now check. |
-
----
-
-## Working agreement
-
-See [`WORKFLOW.md`](WORKFLOW.md). In short: build the next unchecked item, review it, and only then
-tick it ☑ here — a ☑ is read downstream as "shipped, safe to make content about".
-
-- One service per PR (or one category per PR in Phase 3).
-- A service is done when: RCL builds · integration test passes · registered in its provider host
-  and in `All.Web` · capability implemented if the row names one · reviewed · ticked here.

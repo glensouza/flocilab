@@ -7,12 +7,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 FlociLab is a multi-cloud sample gallery built on the [Floci](https://floci.io) emulator suite: four
 emulators (AWS, Azure, GCP, OCI) orchestrated by .NET Aspire, with one Blazor page per emulated
 service showing a real round-trip against the real cloud SDK. The repo doubles as the source for a
-YouTube/blog series — `../floci-content` reads this repo's checklists to decide what is safe to
-publish.
+YouTube/blog series — `../floci-content` holds the backlog (`docs/BACKLOG.md`) and reads its ☑ to
+decide what is safe to publish.
 
-`README.md` documents the Docker/Portainer lab itself. `docs/BLAZOR-PLAN.md` is the build plan and
-the single source of truth for what is done; `docs/WORKFLOW.md` is the public
-summary of the loop. Read the plan before starting work — do not re-derive it.
+`README.md` documents the Docker/Portainer lab itself. `docs/BLAZOR-PLAN.md` is the design (§1-10)
+and the risk register (§14); `../floci-content/docs/BACKLOG.md` is the single source of truth for
+what is done and what is next (§11-13, same numbers). `CONTRIBUTING.md` is the public summary.
+Read both before starting work — do not re-derive them.
 
 ## Commands
 
@@ -55,8 +56,10 @@ dotnet list samples/aws/s3/FlociLab.Aws.S3.Demo package --include-transitive
 
 ### Key files to read first
 
-- `docs/BLAZOR-PLAN.md` — §12 phases and §13 checklists say what is done and what is next; §7 is the
-  per-provider endpoint story, which is where most of the real difficulty lives
+- `../floci-content/docs/BACKLOG.md` — §12 phases and §13 checklists say what is done and what is
+  next
+- `docs/BLAZOR-PLAN.md` — §7 is the per-provider endpoint story, which is where most of the real
+  difficulty lives
 - `src/FlociLab.Core/IServiceDemo.cs` — the contract every sample implements
 - `src/FlociLab.Core/ProbeResult.cs` — the four outcomes (`Ok` / `NotImplemented` / `Unreachable` /
   `Error`) the coverage matrix depends on; `FromException` handles only transport-level cases, so a
@@ -104,7 +107,7 @@ Breaking one of these breaks the design; they are not judgement calls.
 6. **Never invent emulator behaviour.** `curl` the running emulator or read the upstream README
    before writing code. A `501` is a documented outcome — record it and assert it in a test, do not
    work around it.
-7. **`/next` never ticks a checkbox in `docs/BLAZOR-PLAN.md`.** Only `/ship` does, after review —
+7. **`/next` never ticks a checkbox in `../floci-content/docs/BACKLOG.md`.** Only `/ship` does, after review —
    `../floci-content` reads ☑ as "safe to make a video about".
 
 ## Coding Rules
@@ -174,7 +177,7 @@ changes the plan, add it to `docs/BLAZOR-PLAN.md` §14.
 
 ## Testing
 
-- A demo is not ticked in §13 until its integration test passes. How to write that test lives in
+- A demo is not ticked in the backlog's §13 until its integration test passes. How to write that test lives in
   `tests/FlociLab.IntegrationTests/CLAUDE.md`.
 - Demo runs clean up in a `finally` and use a unique per-run resource name, so re-runs are
   idempotent. Test that by running the round-trip twice.
@@ -195,7 +198,7 @@ changes the plan, add it to `docs/BLAZOR-PLAN.md` §14.
 ## The working loop
 
 ```
-/next   →  picks the next unchecked item in docs/BLAZOR-PLAN.md and builds it (leaves the box ☐)
+/next   →  picks the next unchecked item in ../floci-content/docs/BACKLOG.md and builds it (leaves ☐)
 /ship   →  code review → apply findings → tick ☑ → commit → sync to ../floci-content → episode
 /floci-release → a new Floci image: full suite, flip fixed tripwires, fix moved samples, new rows,
                  then re-verify affected episodes and labs (recorded/published ones: stop and ask)
@@ -219,8 +222,8 @@ but not the skills.
 - **Batch independent tool calls** into one message; run the build and the emulator probe together.
 - **Do not spawn subagents.** Each one starts cold and re-derives context the session already has.
   `/next` and `/ship` are designed for inline execution.
-- **Model choice** (plan §11): scaffolding on Haiku 4.5, a service sample on Sonnet 5, escalate to
+- **Model choice** (backlog §11): scaffolding on Haiku 4.5, a service sample on Sonnet 5, escalate to
   Opus 5 only after two genuine failed attempts — typically a GCP transport or Azure ARM shape
   problem. Never start a service on Opus. Batch 3–5 services per session, then start fresh.
-- **Keep this file lean.** It loads into every session; detail belongs in `docs/BLAZOR-PLAN.md` or
-  a skill. Past ~300 lines it is costing more than it earns.
+- **Keep this file lean.** It loads into every session; detail belongs in `docs/BLAZOR-PLAN.md`, the
+  backlog or a skill. Past ~300 lines it is costing more than it earns.

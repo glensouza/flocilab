@@ -1,6 +1,6 @@
 # The RCL template
 
-Phase 1 (`docs/BLAZOR-PLAN.md` §12) shipped four samples — `FlociLab.Aws.S3.Demo`,
+Phase 1 shipped four samples — `FlociLab.Aws.S3.Demo`,
 `FlociLab.Azure.Blob.Demo`, `FlociLab.Gcp.Storage.Demo`, `FlociLab.Oci.ObjectStorage.Demo` — to prove
 one shape works across all four providers before Phase 2 multiplies it by ~20. This page is that
 shape, extracted from the four real samples rather than invented ahead of them. It is **not** a
@@ -49,7 +49,7 @@ samples/<provider>/<service>/FlociLab.<Provider>.<Service>.Demo/
 ├── FlociLab.<Provider>.<Service>.Demo.csproj   # one cloud package + FrameworkReference + refs
 ├── <Service>ClientFactory.cs                   # endpoint wiring, ServiceUrl, UseEmulator, Create()
 ├── <Service>Demo.cs                            # IServiceDemo: ProbeAsync, RunAsync, Classify
-├── <X><Noun>.cs                                # capability impl — only if the plan row names one
+├── <X><Noun>.cs                                # capability impl — only if the service has one
 ├── ServiceCollectionExtensions.cs              # Add<Provider><Service>Demo()
 ├── _Imports.razor
 └── Pages/
@@ -268,7 +268,7 @@ public sealed class <Service>Demo(<Service>ClientFactory factory) : IServiceDemo
 }
 ```
 
-## Capability implementation — only if the plan row names one
+## Capability implementation — only if the service has one
 
 Named for **what it implements**, not generically: `S3ObjectStore`, `BlobObjectStore`,
 `GcsObjectStore` and `OciObjectStore` all implement `IObjectStoreCapability` — none of them is a

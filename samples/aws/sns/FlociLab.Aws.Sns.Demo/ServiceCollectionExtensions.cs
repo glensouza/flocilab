@@ -27,7 +27,7 @@ public static class ServiceCollectionExtensions
         // Registered by concrete type as well as by interface, because SnsPage injects SnsDemo
         // directly — a page that owns one service has no use for the whole catalog, and the
         // resolved-by-interface registration below forwards to the same instance rather than
-        // building a second one. No capability registration — the plan row for SNS names none;
+        // building a second one. No capability registration — SNS has no capability interface;
         // fan-out pub/sub has no genuine cross-cloud analog in this catalog.
         services.TryAddSingleton<SnsDemo>();
 

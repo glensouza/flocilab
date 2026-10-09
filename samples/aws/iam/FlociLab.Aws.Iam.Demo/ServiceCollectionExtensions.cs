@@ -17,7 +17,7 @@ public static class ServiceCollectionExtensions
     ///
     /// The page, the route and the nav entry all come with it — a host adds a ProjectReference and
     /// this line, and nothing else. Unlike the Kind A samples, there is no capability registration
-    /// — IAM's plan row names none (docs/BLAZOR-PLAN.md §13), so it appears only in its own
+    /// — IAM has no capability interface, so it appears only in its own
     /// provider's nav, not on a comparison page.
     /// </summary>
     public static IServiceCollection AddAwsIamDemo(this IServiceCollection services)

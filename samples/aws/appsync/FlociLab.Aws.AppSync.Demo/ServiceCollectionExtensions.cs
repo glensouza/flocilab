@@ -15,7 +15,7 @@ public static class ServiceCollectionExtensions
     ///     .AddAwsAppSyncDemo();
     /// </code>
     ///
-    /// There is no capability registration — AppSync's plan row names none (§13).
+    /// There is no capability registration — AppSync has no capability interface.
     /// </summary>
     public static IServiceCollection AddAwsAppSyncDemo(this IServiceCollection services)
     {

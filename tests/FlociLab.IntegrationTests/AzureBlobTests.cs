@@ -178,7 +178,7 @@ public sealed class AzureBlobTests : IAsyncLifetime
     /// <summary>
     /// The one Blob operation floci-az does not implement. Nothing in the demo calls it, so this
     /// is the tripwire rather than an assertion about the page: when it starts failing, that is
-    /// the signal GetAccountInfo landed upstream and the note in plan §13 can go.
+    /// the signal GetAccountInfo landed upstream and the note about it can go.
     /// </summary>
     [Fact]
     public async Task GetAccountInfo_Is_Not_Implemented()
