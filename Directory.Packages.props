@@ -43,6 +43,7 @@
     <PackageVersion Include="AWSSDK.AppSync" Version="4.0.100.17" />
     <PackageVersion Include="AWSSDK.AutoScaling" Version="4.0.104.5" />
     <PackageVersion Include="AWSSDK.CertificateManager" Version="4.0.102.8" />
+    <PackageVersion Include="AWSSDK.CloudFormation" Version="4.0.103" />
     <PackageVersion Include="AWSSDK.CloudFront" Version="4.0.102.1" />
     <PackageVersion Include="AWSSDK.CloudWatch" Version="4.0.105.2" />
     <PackageVersion Include="AWSSDK.CloudWatchLogs" Version="4.0.105.1" />

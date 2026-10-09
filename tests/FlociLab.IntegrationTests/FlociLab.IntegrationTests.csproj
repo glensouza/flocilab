@@ -40,6 +40,7 @@
     <ProjectReference Include="..\..\samples\aws\apigatewayrest\FlociLab.Aws.ApiGatewayRest.Demo\FlociLab.Aws.ApiGatewayRest.Demo.csproj" />
     <ProjectReference Include="..\..\samples\aws\apigatewayv2\FlociLab.Aws.ApiGatewayV2.Demo\FlociLab.Aws.ApiGatewayV2.Demo.csproj" />
     <ProjectReference Include="..\..\samples\aws\appsync\FlociLab.Aws.AppSync.Demo\FlociLab.Aws.AppSync.Demo.csproj" />
+    <ProjectReference Include="..\..\samples\aws\cloudformation\FlociLab.Aws.CloudFormation.Demo\FlociLab.Aws.CloudFormation.Demo.csproj" />
     <ProjectReference Include="..\..\samples\aws\cloudfront\FlociLab.Aws.CloudFront.Demo\FlociLab.Aws.CloudFront.Demo.csproj" />
     <ProjectReference Include="..\..\samples\aws\cloudmap\FlociLab.Aws.CloudMap.Demo\FlociLab.Aws.CloudMap.Demo.csproj" />
     <ProjectReference Include="..\..\samples\aws\elbv2\FlociLab.Aws.ElbV2.Demo\FlociLab.Aws.ElbV2.Demo.csproj" />
