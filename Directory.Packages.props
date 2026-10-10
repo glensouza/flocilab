@@ -68,6 +68,7 @@
     <PackageVersion Include="AWSSDK.Route53" Version="4.0.100.16" />
     <PackageVersion Include="AWSSDK.Route53Resolver" Version="4.0.100.17" />
     <PackageVersion Include="AWSSDK.S3" Version="4.0.104.2" />
+    <PackageVersion Include="AWSSDK.S3Tables" Version="4.0.100.16" />
     <PackageVersion Include="AWSSDK.Scheduler" Version="4.0.100.16" />
     <PackageVersion Include="AWSSDK.SecretsManager" Version="4.0.100.16" />
     <PackageVersion Include="AWSSDK.SecurityToken" Version="4.0.101.2" />

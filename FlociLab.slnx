@@ -15,6 +15,7 @@
     <Project Path="samples/aws/iam/FlociLab.Aws.Iam.Demo/FlociLab.Aws.Iam.Demo.csproj" />
     <Project Path="samples/aws/kms/FlociLab.Aws.Kms.Demo/FlociLab.Aws.Kms.Demo.csproj" />
     <Project Path="samples/aws/s3/FlociLab.Aws.S3.Demo/FlociLab.Aws.S3.Demo.csproj" />
+    <Project Path="samples/aws/s3tables/FlociLab.Aws.S3Tables.Demo/FlociLab.Aws.S3Tables.Demo.csproj" />
     <Project Path="samples/aws/secretsmanager/FlociLab.Aws.SecretsManager.Demo/FlociLab.Aws.SecretsManager.Demo.csproj" />
     <Project Path="samples/aws/sns/FlociLab.Aws.Sns.Demo/FlociLab.Aws.Sns.Demo.csproj" />
     <Project Path="samples/aws/sqs/FlociLab.Aws.Sqs.Demo/FlociLab.Aws.Sqs.Demo.csproj" />

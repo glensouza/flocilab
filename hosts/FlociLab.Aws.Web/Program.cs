@@ -34,6 +34,7 @@ using FlociLab.Aws.Ram;
 using FlociLab.Aws.Route53;
 using FlociLab.Aws.Route53Resolver;
 using FlociLab.Aws.S3;
+using FlociLab.Aws.S3Tables;
 using FlociLab.Aws.SecretsManager;
 using FlociLab.Aws.Sns;
 using FlociLab.Aws.Sqs;
@@ -58,6 +59,7 @@ builder.Services
     .AddFlociCore(builder.Configuration)
     .AddFlociShell(typeof(Program).Assembly, "FlociLab AWS", "AWS emulator samples")
     .AddAwsS3Demo()
+    .AddAwsS3TablesDemo()
     .AddAwsSqsDemo()
     .AddAwsDynamoDbDemo()
     .AddAwsEventBridgeDemo()
