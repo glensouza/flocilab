@@ -62,6 +62,7 @@
     <ProjectReference Include="..\..\samples\aws\lightsail\FlociLab.Aws.Lightsail.Demo\FlociLab.Aws.Lightsail.Demo.csproj" />
     <ProjectReference Include="..\..\samples\aws\applicationautoscaling\FlociLab.Aws.ApplicationAutoScaling.Demo\FlociLab.Aws.ApplicationAutoScaling.Demo.csproj" />
     <ProjectReference Include="..\..\samples\aws\elasticbeanstalk\FlociLab.Aws.ElasticBeanstalk.Demo\FlociLab.Aws.ElasticBeanstalk.Demo.csproj" />
+    <ProjectReference Include="..\..\samples\aws\efs\FlociLab.Aws.Efs.Demo\FlociLab.Aws.Efs.Demo.csproj" />
     <ProjectReference Include="..\..\samples\aws\autoscaling\FlociLab.Aws.AutoScaling.Demo\FlociLab.Aws.AutoScaling.Demo.csproj" />
     <ProjectReference Include="..\..\samples\aws\organizations\FlociLab.Aws.Organizations.Demo\FlociLab.Aws.Organizations.Demo.csproj" />
     <ProjectReference Include="..\..\samples\aws\ram\FlociLab.Aws.Ram.Demo\FlociLab.Aws.Ram.Demo.csproj" />

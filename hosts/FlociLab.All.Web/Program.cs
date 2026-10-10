@@ -19,6 +19,7 @@ using FlociLab.Aws.CodeGuruReviewer;
 using FlociLab.Aws.Cognito;
 using FlociLab.Aws.DynamoDb;
 using FlociLab.Aws.ElasticBeanstalk;
+using FlociLab.Aws.Efs;
 using FlociLab.Aws.ElbClassic;
 using FlociLab.Aws.ElbV2;
 using FlociLab.Aws.EventBridge;
@@ -122,6 +123,7 @@ builder.Services
     .AddAwsAutoScalingDemo()
     .AddAwsApplicationAutoScalingDemo()
     .AddAwsElasticBeanstalkDemo()
+    .AddAwsEfsDemo()
     .AddAzureBlobDemo()
     .AddAzureQueueDemo()
     .AddAzureServiceBusDemo()
