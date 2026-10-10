@@ -16,6 +16,7 @@
     <ProjectReference Include="..\..\src\FlociLab.Comparison\FlociLab.Comparison.csproj" />
     <ProjectReference Include="..\..\samples\aws\s3\FlociLab.Aws.S3.Demo\FlociLab.Aws.S3.Demo.csproj" />
     <ProjectReference Include="..\..\samples\aws\s3tables\FlociLab.Aws.S3Tables.Demo\FlociLab.Aws.S3Tables.Demo.csproj" />
+    <ProjectReference Include="..\..\samples\aws\s3vectors\FlociLab.Aws.S3Vectors.Demo\FlociLab.Aws.S3Vectors.Demo.csproj" />
     <ProjectReference Include="..\..\samples\aws\sqs\FlociLab.Aws.Sqs.Demo\FlociLab.Aws.Sqs.Demo.csproj" />
     <ProjectReference Include="..\..\samples\aws\dynamodb\FlociLab.Aws.DynamoDb.Demo\FlociLab.Aws.DynamoDb.Demo.csproj" />
     <ProjectReference Include="..\..\samples\aws\eventbridge\FlociLab.Aws.EventBridge.Demo\FlociLab.Aws.EventBridge.Demo.csproj" />
