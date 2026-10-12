@@ -42,7 +42,7 @@ public sealed class IamDemo(IamClientFactory factory) : IServiceDemo
     /// clean, deterministic bug (verified against floci 1.7.0, 2026-09-04; see
     /// docs/BLAZOR-PLAN.md §14). It no longer reproduces: on 2026-10-08, against floci 2.2.0,
     /// 4.0.103.4 and 4.0.103.7 each answered twenty standalone ListUsers calls on a fresh account
-    /// with a null Users list and no exception. Not worth a probe whose answer has already moved
+    /// with a null Users list and no exception (not re-measured on 4.0.103.9, the 2026-10-12 pin). Not worth a probe whose answer has already moved
     /// once — the AWS-managed policy catalog is never empty, so ListPolicies sidesteps the question
     /// entirely rather than depending on the answer.
     /// </summary>
