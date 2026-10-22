@@ -18,6 +18,7 @@ namespace FlociLab.Aws.Acm;
 /// <c>PENDING_VALIDATION</c> until the validation CNAME is in DNS, floci issues it in the request
 /// call, and every step reports what the engine actually answered rather than what the docs promise.
 /// </summary>
+[ServiceFinding("real ACM refuses a name that is not a valid domain", "real ACM refuses a name that is not a valid domain; floci does not check")]
 public sealed class AcmDemo(AcmClientFactory factory) : IServiceDemo
 {
     public string Provider => CloudProvider.Aws;

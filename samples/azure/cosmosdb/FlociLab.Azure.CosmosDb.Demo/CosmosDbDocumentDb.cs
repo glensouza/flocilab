@@ -28,6 +28,8 @@ public sealed class CosmosDbDocumentDb(CosmosDbClientFactory factory) : IDocumen
 
     public string ServiceName => "Azure Cosmos DB";
 
+    public string? SourcePath => "samples/azure/cosmosdb/FlociLab.Azure.CosmosDb.Demo/CosmosDbDocumentDb.cs";
+
     // The same classifier CosmosDbDemo uses for its probe, so the coverage matrix and the
     // comparison page can never disagree about whether an operation is unimplemented,
     // unreachable or genuinely broken. TimeSpan.Zero because only the status is wanted
@@ -43,6 +45,7 @@ public sealed class CosmosDbDocumentDb(CosmosDbClientFactory factory) : IDocumen
     /// </summary>
     public async Task<IReadOnlyList<CollectionInfo>> ListCollectionsAsync(CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nCosmosDbDocumentDb.ListCollectionsAsync");
         Database database = factory.Create().GetDatabase(DatabaseId);
         List<CollectionInfo> collections = [];
 
@@ -69,6 +72,7 @@ public sealed class CosmosDbDocumentDb(CosmosDbClientFactory factory) : IDocumen
     /// the comparison page has an identical schema across both document-DB columns.</summary>
     public async Task CreateCollectionAsync(string name, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nCosmosDbDocumentDb.CreateCollectionAsync");
         Database database = await this.EnsureDatabaseAsync(ct).ConfigureAwait(false);
         await database.CreateContainerAsync(name, "/id", cancellationToken: ct).ConfigureAwait(false);
     }
@@ -80,6 +84,7 @@ public sealed class CosmosDbDocumentDb(CosmosDbClientFactory factory) : IDocumen
     /// </summary>
     public async Task UpsertDocumentAsync(string collection, string id, string json, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nCosmosDbDocumentDb.UpsertDocumentAsync");
         Container container = factory.Create().GetContainer(DatabaseId, collection);
 
         using JsonDocument parsed = JsonDocument.Parse(json);
@@ -100,6 +105,7 @@ public sealed class CosmosDbDocumentDb(CosmosDbClientFactory factory) : IDocumen
 
     public async Task<string?> GetDocumentAsync(string collection, string id, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nCosmosDbDocumentDb.GetDocumentAsync");
         Container container = factory.Create().GetContainer(DatabaseId, collection);
 
         using ResponseMessage response = await container.ReadItemStreamAsync(id, new PartitionKey(id), cancellationToken: ct).ConfigureAwait(false);
@@ -117,6 +123,7 @@ public sealed class CosmosDbDocumentDb(CosmosDbClientFactory factory) : IDocumen
 
     public async Task DeleteCollectionAsync(string name, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nCosmosDbDocumentDb.DeleteCollectionAsync");
         Container container = factory.Create().GetContainer(DatabaseId, name);
         await container.DeleteContainerAsync(cancellationToken: ct).ConfigureAwait(false);
     }

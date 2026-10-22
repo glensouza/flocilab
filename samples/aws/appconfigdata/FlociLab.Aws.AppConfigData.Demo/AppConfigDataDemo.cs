@@ -20,6 +20,7 @@ namespace FlociLab.Aws.AppConfigData;
 /// plane: <see cref="AppConfigSeeder"/> does it with AWSSDK.AppConfig, the sample's second package.
 /// Every step reports what the engine actually answered rather than what the docs promise.
 /// </summary>
+[ServiceFinding("real AppConfigData answers ResourceNotFoundException for an application that...", "real AppConfigData answers ResourceNotFoundException for an application that does not exist; floci has started to accept it")]
 public sealed class AppConfigDataDemo(AppConfigDataClientFactory factory) : IServiceDemo
 {
     private const string FlagsJson = """{"checkout":{"newFlow":false},"timeoutSeconds":30}""";

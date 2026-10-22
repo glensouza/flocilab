@@ -22,6 +22,14 @@ public sealed class FlociOptions
     public TimeSpan ProbeTimeout { get; set; } = TimeSpan.FromSeconds(5);
 
     /// <summary>
+    /// Kind B services start real containers and are slow, so they stay out of an ordinary run.
+    /// A demo opts in with <see cref="ContainerBackedServiceAttribute"/>; the catalog hides it
+    /// while this is false. The AppHost reads the same flag to decide which hostname advertised
+    /// URLs use: <c>127.0.0.1</c> for the host, or the container's network alias when this is true.
+    /// </summary>
+    public bool EnableContainerBackedServices { get; set; }
+
+    /// <summary>
     /// Slugs reach here from <see cref="IServiceDemo.Provider"/> and from route values, and the
     /// rest of the codebase matches them case-insensitively (<c>DemoCatalog.Find</c>), so this
     /// does too — a case mismatch should not be a hard throw.

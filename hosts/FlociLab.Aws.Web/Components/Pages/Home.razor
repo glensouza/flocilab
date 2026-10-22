@@ -1,14 +1,15 @@
 @page "/"
+@inject IDemoCatalog Catalog
 
 <PageTitle>FlociLab AWS</PageTitle>
 
 <h1>FlociLab AWS</h1>
 
 <p class="lede">
-    AWS samples only — this app references <code>FlociLab.Core</code> and
-    <code>FlociLab.Aws.S3.Demo</code> and nothing else, so it is the standalone artifact: clone
-    <code>hosts/FlociLab.Aws.Web</code> plus the samples it references and you have an AWS demo
-    with no other cloud SDK anywhere in the dependency tree.
+    AWS samples only — @this.Catalog.Demos.Count of them. This host references
+    <code>FlociLab.Core</code> and the AWS sample libraries, and no other cloud SDK, so it is the
+    standalone artifact: clone <code>hosts/FlociLab.Aws.Web</code> plus the samples it references
+    and you have an AWS demo with nothing else in the dependency tree.
 </p>
 
 <p>

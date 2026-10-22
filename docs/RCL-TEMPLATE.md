@@ -45,15 +45,17 @@ Three consequences worth stating outright, because each is a silent failure:
 ## File tree
 
 ```
-samples/<provider>/<service>/FlociLab.<Provider>.<Service>.Demo/
-├── FlociLab.<Provider>.<Service>.Demo.csproj   # one cloud package + FrameworkReference + refs
-├── <Service>ClientFactory.cs                   # endpoint wiring, ServiceUrl, UseEmulator, Create()
-├── <Service>Demo.cs                            # IServiceDemo: ProbeAsync, RunAsync, Classify
-├── <X><Noun>.cs                                # capability impl — only if the service has one
-├── ServiceCollectionExtensions.cs              # Add<Provider><Service>Demo()
-├── _Imports.razor
-└── Pages/
-    └── <Service>Page.razor                     # and <Service>Page.razor.css — all four ship one
+samples/<provider>/<service>/
+├── lab.cs                                      # dotnet run lab.cs — calls the demo's own RunAsync
+└── FlociLab.<Provider>.<Service>.Demo/
+    ├── FlociLab.<Provider>.<Service>.Demo.csproj   # one cloud package + FrameworkReference + refs
+    ├── <Service>ClientFactory.cs                   # endpoint wiring, ServiceUrl, UseEmulator, Create()
+    ├── <Service>Demo.cs                            # IServiceDemo: ProbeAsync, RunAsync, Classify
+    ├── <X><Noun>.cs                                # capability impl — only if the service has one
+    ├── ServiceCollectionExtensions.cs              # Add<Provider><Service>Demo()
+    ├── _Imports.razor
+    └── Pages/
+        └── <Service>Page.razor                     # and <Service>Page.razor.css — all four ship one
 ```
 
 Every file below is a trimmed skeleton. Full worked examples: `samples/aws/s3/` (easy provider,
@@ -451,7 +453,13 @@ solution and the test project:
 2. Both `Program.cs` files add `.Add<Provider><Service>Demo()` to the `AddFlociCore(...)` chain.
 3. `FlociLab.slnx` gets the project, and `tests/FlociLab.IntegrationTests.csproj` gets a
    `<ProjectReference>` to it — without the latter the test file below cannot compile.
-4. Nothing else in the hosts — `IDemoCatalog.PageAssemblies` derives the nav, the coverage row,
+4. `samples/<provider>/<service>/lab.cs` references the new project with `#:project` and
+   `#:sdk Microsoft.NET.Sdk.Web`, calls `AddFlociCore(FlociEnvironment.Apply)` and the new
+   `Add*Demo()`, and runs every `IServiceDemo` the registration added. It is the file someone
+   clones when they do not want the Blazor host. A Kind B demo also carries
+   `[ContainerBackedService]` so the catalog hides it until
+   `Floci:EnableContainerBackedServices` is set.
+5. Nothing else in the hosts — `IDemoCatalog.PageAssemblies` derives the nav, the coverage row,
    the endpoint route table (`MapRazorComponents<App>().AddAdditionalAssemblies(...)`) and the in-circuit router
    (`Routes.razor`'s `AdditionalAssemblies`) from the registrations above. Both read the same
    property, so there is nothing to keep in sync by hand — only to remember to add in the first

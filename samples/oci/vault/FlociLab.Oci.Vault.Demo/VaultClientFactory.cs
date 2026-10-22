@@ -55,9 +55,10 @@ public sealed class VaultClientFactory(OciEndpoints endpoints) : IDisposable
     /// the identical answer. It reports <c>http://{FLOCI_OCI_HOSTNAME}:4599</c> for both planes,
     /// falling back to the literal <c>localhost</c> when that variable is unset, and it ignores the
     /// <c>Host</c> header entirely — verified by curl against a *fresh* floci-oci 0.3.0 container
-    /// all three ways, 2026-09-02. The AppHost deliberately leaves <c>FLOCI_OCI_HOSTNAME</c> unset
-    /// (see <c>FLOCI_HOSTNAME</c> in <c>AppHost.cs</c>), so under the lab every vault reports
-    /// <c>http://localhost:4599</c> — reachable only from the host and only while the published
+    /// all three ways, 2026-09-02. The AppHost now sets <c>FLOCI_OCI_HOSTNAME</c>
+    /// (see <c>AppHost.cs</c>): <c>127.0.0.1</c> unless container-backed services are on, in which
+    /// case <c>floci-oci</c>. A throwaway test container still leaves it unset, so those runs
+    /// report <c>http://localhost:4599</c> — reachable only from the host and only while the published
     /// port is still the default, never from a sibling container on the <c>floci</c> network and
     /// never under Testcontainers, where the port is randomly mapped. It is also exactly the
     /// <c>localhost</c> the rest of this repo refuses (plan §14 — the dead IPv6 attempt on

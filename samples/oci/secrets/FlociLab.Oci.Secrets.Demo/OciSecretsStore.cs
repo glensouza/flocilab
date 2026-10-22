@@ -29,6 +29,8 @@ public sealed class OciSecretsStore(SecretsClientFactory factory) : ISecretStore
 
     public string ServiceName => "OCI Vault Secrets";
 
+    public string? SourcePath => "samples/oci/secrets/FlociLab.Oci.Secrets.Demo/OciSecretsStore.cs";
+
     // The same classifier SecretsDemo uses for its probe, so the coverage matrix and the
     // comparison page can never disagree about whether an operation is unimplemented, unreachable
     // or genuinely broken. TimeSpan.Zero because only the status is wanted here — the comparison
@@ -37,6 +39,7 @@ public sealed class OciSecretsStore(SecretsClientFactory factory) : ISecretStore
 
     public async Task<IReadOnlyList<SecretInfo>> ListSecretsAsync(CancellationToken ct)
     {
+        CallTrace.Request($"{factory.Endpoint}\nOciSecretsStore.ListSecretsAsync");
         VaultsClient secretsManagement = factory.CreateSecretsManagement();
         ListSecretsResponse response = await secretsManagement.ListSecrets(
             new ListSecretsRequest { CompartmentId = factory.CompartmentId }, cancellationToken: ct).ConfigureAwait(false);
@@ -59,6 +62,7 @@ public sealed class OciSecretsStore(SecretsClientFactory factory) : ISecretStore
     /// </summary>
     public async Task SetSecretAsync(string name, string value, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.Endpoint}\nOciSecretsStore.SetSecretAsync");
         VaultsClient secretsManagement = factory.CreateSecretsManagement();
         string? existingId = await this.FindSecretIdAsync(secretsManagement, name, ct).ConfigureAwait(false);
         Base64SecretContentDetails content = new()
@@ -100,6 +104,7 @@ public sealed class OciSecretsStore(SecretsClientFactory factory) : ISecretStore
 
     public async Task<string> GetSecretAsync(string name, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.Endpoint}\nOciSecretsStore.GetSecretAsync");
         VaultsClient secretsManagement = factory.CreateSecretsManagement();
         string? secretId = await this.FindSecretIdAsync(secretsManagement, name, ct).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"No secret named '{name}' exists.");
@@ -114,6 +119,7 @@ public sealed class OciSecretsStore(SecretsClientFactory factory) : ISecretStore
     /// <summary>Schedules the secret's deletion — the closest OCI Vault gets to "delete"; real Vault never removes a secret synchronously.</summary>
     public async Task DeleteSecretAsync(string name, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.Endpoint}\nOciSecretsStore.DeleteSecretAsync");
         VaultsClient secretsManagement = factory.CreateSecretsManagement();
         string secretId = await this.FindSecretIdAsync(secretsManagement, name, ct).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"No secret named '{name}' exists.");

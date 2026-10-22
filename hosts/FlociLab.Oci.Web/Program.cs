@@ -50,4 +50,6 @@ app.MapRazorComponents<App>()
     .AddAdditionalAssemblies(pageAssemblies)
     .AddInteractiveServerRenderMode();
 
+app.MapCoverageSnapshot();
+
 app.Run();

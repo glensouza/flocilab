@@ -22,6 +22,9 @@ namespace FlociLab.Aws.AppConfig;
 /// gaps where it differs from AWS and to stop a deployment AWS is still baking. Every step reports
 /// what the engine actually answered rather than what the docs promise.
 /// </summary>
+[ServiceFinding("real AppConfig refuses a version the profile does not have", "real AppConfig refuses a version the profile does not have; floci deploys it and reports it complete")]
+[ServiceFinding("floci completes the deployment at once, with no rollout and no bake time", "floci completes the deployment at once, with no rollout and no bake time; real AppConfig reads Deploying and then Baking for the strategy's bake time")]
+[ServiceFinding("real AppConfig answers ResourceNotFoundException for an application that does...", "real AppConfig answers ResourceNotFoundException for an application that does not exist; floci has started to accept it")]
 public sealed class AppConfigDemo(AppConfigClientFactory factory) : IServiceDemo
 {
     /// <summary>A strategy AppConfig ships with, so the run creates none: floci cannot delete a strategy.</summary>

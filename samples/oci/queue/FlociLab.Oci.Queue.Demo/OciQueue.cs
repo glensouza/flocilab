@@ -26,6 +26,8 @@ public sealed class OciQueue(QueueClientFactory factory) : IQueueCapability
 
     public string ServiceName => "OCI Queue";
 
+    public string? SourcePath => "samples/oci/queue/FlociLab.Oci.Queue.Demo/OciQueue.cs";
+
     // The same classifier QueueDemo uses for its probe, so the coverage matrix and the comparison
     // page can never disagree about whether an operation is unimplemented, unreachable or
     // genuinely broken. TimeSpan.Zero because only the status is wanted here — the comparison page
@@ -34,6 +36,7 @@ public sealed class OciQueue(QueueClientFactory factory) : IQueueCapability
 
     public async Task<IReadOnlyList<QueueInfo>> ListQueuesAsync(CancellationToken ct)
     {
+        CallTrace.Request($"{factory.Endpoint}\nOciQueue.ListQueuesAsync");
         QueueAdminClient admin = factory.CreateAdmin();
 
         List<QueueInfo> queues = [];
@@ -57,6 +60,7 @@ public sealed class OciQueue(QueueClientFactory factory) : IQueueCapability
 
     public async Task CreateQueueAsync(string name, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.Endpoint}\nOciQueue.CreateQueueAsync");
         QueueAdminClient admin = factory.CreateAdmin();
         CreateQueueResponse response = await admin.CreateQueue(
             new CreateQueueRequest
@@ -72,6 +76,7 @@ public sealed class OciQueue(QueueClientFactory factory) : IQueueCapability
 
     public async Task SendMessageAsync(string queue, string body, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.Endpoint}\nOciQueue.SendMessageAsync");
         QueueAdminClient admin = factory.CreateAdmin();
         QueueSummary resolved = await ResolveQueueAsync(admin, factory.CompartmentId, queue, ct).ConfigureAwait(false);
 
@@ -97,6 +102,7 @@ public sealed class OciQueue(QueueClientFactory factory) : IQueueCapability
     /// </summary>
     public async Task<IReadOnlyList<QueueMessage>> ReceiveMessagesAsync(string queue, int maxMessages, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.Endpoint}\nOciQueue.ReceiveMessagesAsync");
         QueueAdminClient admin = factory.CreateAdmin();
         QueueSummary resolved = await ResolveQueueAsync(admin, factory.CompartmentId, queue, ct).ConfigureAwait(false);
 
@@ -136,6 +142,7 @@ public sealed class OciQueue(QueueClientFactory factory) : IQueueCapability
 
     public async Task DeleteQueueAsync(string name, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.Endpoint}\nOciQueue.DeleteQueueAsync");
         QueueAdminClient admin = factory.CreateAdmin();
         QueueSummary resolved = await ResolveQueueAsync(admin, factory.CompartmentId, name, ct).ConfigureAwait(false);
 

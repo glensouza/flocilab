@@ -16,6 +16,8 @@ public sealed class S3ObjectStore(S3ClientFactory factory) : IObjectStoreCapabil
 
     public string ServiceName => "Amazon S3";
 
+    public string? SourcePath => "samples/aws/s3/FlociLab.Aws.S3.Demo/S3ObjectStore.cs";
+
     // The same classifier S3Demo uses for its probe, so the coverage matrix and the
     // comparison page can never disagree about whether an operation is unimplemented,
     // unreachable or genuinely broken. TimeSpan.Zero because only the status is wanted
@@ -24,6 +26,7 @@ public sealed class S3ObjectStore(S3ClientFactory factory) : IObjectStoreCapabil
 
     public async Task<IReadOnlyList<ContainerInfo>> ListContainersAsync(CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nS3ObjectStore.ListContainersAsync");
         using IAmazonS3 client = factory.Create();
         ListBucketsResponse response = await client.ListBucketsAsync(new ListBucketsRequest(), ct).ConfigureAwait(false);
 
@@ -32,12 +35,14 @@ public sealed class S3ObjectStore(S3ClientFactory factory) : IObjectStoreCapabil
 
     public async Task CreateContainerAsync(string name, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nS3ObjectStore.CreateContainerAsync");
         using IAmazonS3 client = factory.Create();
         await client.PutBucketAsync(new PutBucketRequest { BucketName = name }, ct).ConfigureAwait(false);
     }
 
     public async Task PutObjectAsync(string container, string key, Stream data, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nS3ObjectStore.PutObjectAsync");
         using IAmazonS3 client = factory.Create();
         await client.PutObjectAsync(
             new PutObjectRequest
@@ -54,6 +59,7 @@ public sealed class S3ObjectStore(S3ClientFactory factory) : IObjectStoreCapabil
     /// </summary>
     public async Task<Stream> GetObjectAsync(string container, string key, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nS3ObjectStore.GetObjectAsync");
         using IAmazonS3 client = factory.Create();
         using GetObjectResponse response = await client.GetObjectAsync(container, key, ct).ConfigureAwait(false);
 
@@ -70,6 +76,7 @@ public sealed class S3ObjectStore(S3ClientFactory factory) : IObjectStoreCapabil
     /// </summary>
     public async Task DeleteContainerAsync(string name, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nS3ObjectStore.DeleteContainerAsync");
         using IAmazonS3 client = factory.Create();
 
         string? continuationToken = null;

@@ -15,6 +15,9 @@
         <li>
             <NavLink href="/coverage">Coverage matrix</NavLink>
         </li>
+        <li>
+            <NavLink href="/differences">Known differences</NavLink>
+        </li>
     </ul>
 
     @foreach (NavSection section in NavSections)
@@ -22,18 +25,34 @@
         <DynamicComponent Type="section.Component" />
     }
 
+    @if (Catalog.Demos.Count != 0)
+    {
+        <input class="nav-filter" type="search" placeholder="Filter services" @bind="this.filter" @bind:event="oninput" />
+    }
+
     @foreach (ProviderDemos group in Catalog.ByProvider)
     {
+        IReadOnlyList<IGrouping<string, IServiceDemo>> categories = this.Categories(group);
+
+        if (categories.Count == 0)
+        {
+            continue;
+        }
+
         <div class="nav-group">
             <h2>@group.DisplayName</h2>
-            <ul class="nav-list">
-                @foreach (IServiceDemo demo in group.Demos)
-                {
-                    <li>
-                        <NavLink href="@demo.Route">@demo.DisplayName</NavLink>
-                    </li>
-                }
-            </ul>
+            @foreach (IGrouping<string, IServiceDemo> category in categories)
+            {
+                <p class="nav-category">@category.Key</p>
+                <ul class="nav-list">
+                    @foreach (IServiceDemo demo in category)
+                    {
+                        <li>
+                            <NavLink href="@demo.Route">@demo.DisplayName</NavLink>
+                        </li>
+                    }
+                </ul>
+            }
         </div>
     }
 
@@ -44,4 +63,21 @@
             <code>Add*Demo()</code> call in <code>Program.cs</code>.
         </p>
     }
+    else if (this.Catalog.ByProvider.All(group => this.Categories(group).Count == 0))
+    {
+        <p class="nav-empty">No services match "@this.filter".</p>
+    }
 </nav>
+
+@code {
+    private string filter = "";
+
+    private IReadOnlyList<IGrouping<string, IServiceDemo>> Categories(ProviderDemos group)
+        => [.. group.Demos.Where(this.Matches).GroupBy(demo => demo.Category, StringComparer.OrdinalIgnoreCase)];
+
+    private bool Matches(IServiceDemo demo)
+        => string.IsNullOrWhiteSpace(this.filter)
+            || demo.DisplayName.Contains(this.filter, StringComparison.OrdinalIgnoreCase)
+            || demo.Slug.Contains(this.filter, StringComparison.OrdinalIgnoreCase)
+            || demo.Category.Contains(this.filter, StringComparison.OrdinalIgnoreCase);
+}

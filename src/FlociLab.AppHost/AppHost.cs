@@ -28,20 +28,23 @@ const string OciHealth = "/_floci-oci/health";
 const string SharedNetwork = "floci";
 EnsureNetwork(SharedNetwork);
 
+// Kind B (Lambda, RDS, EKS, Cloud Run, Functions, OKE) stays out of an ordinary F5. The flag
+// also picks which consumer an advertised URL is for, because one hostname cannot be both.
+// Off: 127.0.0.1, which is the host FlociLab.All.Web runs on. On: the container's alias on the
+// shared network, which a sibling container can resolve and the host cannot. An unset
+// FLOCI_HOSTNAME has already meant both of those, depending on the image (plan §14).
+bool containerBacked = string.Equals(
+    builder.Configuration["Floci:EnableContainerBackedServices"],
+    "true",
+    StringComparison.OrdinalIgnoreCase);
+string awsHost = containerBacked ? "floci" : "127.0.0.1";
+string azureHost = containerBacked ? "floci-az" : "127.0.0.1";
+string gcpHost = containerBacked ? "floci-gcp" : "127.0.0.1";
+string ociHost = containerBacked ? "floci-oci" : "127.0.0.1";
+
 IResourceBuilder<ContainerResource> aws = builder.AddContainer("floci", "floci/floci", "latest")
     .WithHttpEndpoint(port: 4566, targetPort: 4566, name: "http")
-    // Deliberately NOT setting FLOCI_HOSTNAME, which would pin the advertised host explicitly.
-    // What an unset FLOCI_HOSTNAME yields has changed under us: floci 1.7.0 handed back
-    // http://floci:4566/... from CreateQueue (measured 2026-08-30), and floci 2.1.0 hands back
-    // http://localhost:4566/... (measured 2026-09-28). Neither is right for both consumers —
-    // the first does not resolve from FlociLab.All.Web on the host, the second not from a
-    // sibling container.
-    //
-    // That is harmless for every sample so far: AWSSDK.SQS ships no endpoint-rewriting pipeline
-    // handler, so a QueueUrl travels as a request parameter and the SDK always dials
-    // config.ServiceURL. It would bite anything that treats a returned URL as a connect target --
-    // a pre-signed S3 link being the obvious case, and no sample builds one yet. Revisit in
-    // Phase 4, when emulator-started sibling containers become the second consumer (plan §14).
+    .WithEnvironment("FLOCI_HOSTNAME", awsHost)
     .WithEnvironment("FLOCI_DEFAULT_REGION", "us-east-1")
     .WithEnvironment("FLOCI_STORAGE_MODE", "persistent")
     // Where the emulator puts the throwaway containers it starts for Lambda, ECS, EKS and friends.
@@ -65,8 +68,7 @@ IResourceBuilder<ContainerResource> azure = builder.AddContainer("floci-az", "fl
     // with "port is already allocated", which left the namespace stuck failing to start on every
     // retry (§14). Event Hubs' AMQP port above is unaffected only because no sample calls it yet.
     .WithEndpoint(port: 9093, targetPort: 9093, name: "kafka")
-    // FLOCI_AZ_HOSTNAME / FLOCI_AZ_BASE_URL omitted for the same reason as FLOCI_HOSTNAME above:
-    // the Blob and Queue endpoints they stamp into responses have to resolve from the host.
+    .WithEnvironment("FLOCI_AZ_HOSTNAME", azureHost)
     .WithEnvironment("FLOCI_AZ_STORAGE_MODE", "persistent")
     // Service Bus defaults to mocked mode (management plane only, no Artemis sidecar) — MOCKED=false
     // is the one setting that actually matters; without it the AMQP data plane never accepts a
@@ -85,7 +87,7 @@ IResourceBuilder<ContainerResource> azure = builder.AddContainer("floci-az", "fl
 
 IResourceBuilder<ContainerResource> gcp = builder.AddContainer("floci-gcp", "floci/floci-gcp", "latest")
     .WithHttpEndpoint(port: 4588, targetPort: 4588, name: "http")
-    // FLOCI_GCP_HOSTNAME / FLOCI_GCP_BASE_URL omitted — see FLOCI_HOSTNAME above.
+    .WithEnvironment("FLOCI_GCP_HOSTNAME", gcpHost)
     .WithEnvironment("FLOCI_GCP_DEFAULT_PROJECT_ID", "floci-local")
     .WithEnvironment("FLOCI_GCP_STORAGE_MODE", "persistent")
     .WithVolume("flocilab-gcp-data", "/app/data")
@@ -96,7 +98,7 @@ IResourceBuilder<ContainerResource> gcp = builder.AddContainer("floci-gcp", "flo
 
 IResourceBuilder<ContainerResource> oci = builder.AddContainer("floci-oci", "floci/floci-oci", "latest")
     .WithHttpEndpoint(port: 4599, targetPort: 4599, name: "http")
-    // FLOCI_OCI_HOSTNAME omitted — see FLOCI_HOSTNAME above.
+    .WithEnvironment("FLOCI_OCI_HOSTNAME", ociHost)
     .WithEnvironment("FLOCI_OCI_STORAGE_MODE", "persistent")
     // The image issues no tenancy OCID of its own, so the lab supplies one and the samples
     // default to the same value.
@@ -138,6 +140,7 @@ builder.AddProject<Projects.FlociLab_All_Web>("all")
     .WithEnvironment("Floci__Azure__Endpoint", azure.GetEndpoint("http"))
     .WithEnvironment("Floci__Gcp__Endpoint", gcp.GetEndpoint("http"))
     .WithEnvironment("Floci__Oci__Endpoint", oci.GetEndpoint("http"))
+    .WithEnvironment("Floci__EnableContainerBackedServices", containerBacked ? "true" : "false")
     // Azure.Identity reads only this variable to find a non-default IMDS address, and it wants a
     // host — it appends /metadata/identity/oauth2/token itself.
     .WithEnvironment("AZURE_POD_IDENTITY_AUTHORITY_HOST", azure.GetEndpoint("http"))

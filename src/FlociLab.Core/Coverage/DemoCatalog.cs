@@ -1,12 +1,26 @@
 using System.Reflection;
+using FlociLab.Core.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace FlociLab.Core.Coverage;
 
 internal sealed class DemoCatalog : IDemoCatalog
 {
-    public DemoCatalog(IEnumerable<IServiceDemo> demos, IEnumerable<PageAssembly> pageAssemblies)
+    public DemoCatalog(
+        IEnumerable<IServiceDemo> demos,
+        IEnumerable<PageAssembly> pageAssemblies,
+        IOptions<FlociOptions> options)
     {
-        this.Demos = [.. demos
+        ArgumentNullException.ThrowIfNull(options);
+
+        // Kind B demos start containers. They stay out of the nav, the coverage grid and the
+        // comparison columns until the flag says otherwise. The route still exists; the attribute's
+        // remarks say the page has to refuse the run itself.
+        IEnumerable<IServiceDemo> visible = options.Value.EnableContainerBackedServices
+            ? demos
+            : demos.Where(demo => demo.GetType().GetCustomAttribute<ContainerBackedServiceAttribute>() is null);
+
+        this.Demos = [.. visible
             .OrderBy(d => CloudProvider.Order(d.Provider))
             .ThenBy(d => d.Category, StringComparer.OrdinalIgnoreCase)
             .ThenBy(d => d.DisplayName, StringComparer.OrdinalIgnoreCase)];

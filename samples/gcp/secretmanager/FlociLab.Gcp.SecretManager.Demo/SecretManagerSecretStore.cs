@@ -18,6 +18,8 @@ public sealed class SecretManagerSecretStore(SecretManagerClientFactory factory)
 
     public string ServiceName => "Google Cloud Secret Manager";
 
+    public string? SourcePath => "samples/gcp/secretmanager/FlociLab.Gcp.SecretManager.Demo/SecretManagerSecretStore.cs";
+
     // The same classifier SecretManagerDemo uses for its probe, so the coverage matrix and the
     // comparison page can never disagree about whether an operation is unimplemented, unreachable
     // or genuinely broken. TimeSpan.Zero because only the status is wanted here — the comparison
@@ -26,6 +28,7 @@ public sealed class SecretManagerSecretStore(SecretManagerClientFactory factory)
 
     public async Task<IReadOnlyList<SecretInfo>> ListSecretsAsync(CancellationToken ct)
     {
+        CallTrace.Request("SecretManagerSecretStore.ListSecretsAsync");
         SecretManagerServiceClient client = factory.Create();
         List<SecretInfo> secrets = [];
 
@@ -57,6 +60,7 @@ public sealed class SecretManagerSecretStore(SecretManagerClientFactory factory)
     /// </summary>
     public async Task SetSecretAsync(string name, string value, CancellationToken ct)
     {
+        CallTrace.Request("SecretManagerSecretStore.SetSecretAsync");
         SecretManagerServiceClient client = factory.Create();
         SecretName secretName = new(factory.ProjectId, name);
         SecretPayload payload = new() { Data = ByteString.CopyFromUtf8(value) };
@@ -79,6 +83,7 @@ public sealed class SecretManagerSecretStore(SecretManagerClientFactory factory)
 
     public async Task<string> GetSecretAsync(string name, CancellationToken ct)
     {
+        CallTrace.Request("SecretManagerSecretStore.GetSecretAsync");
         SecretManagerServiceClient client = factory.Create();
         SecretVersionName latest = new(factory.ProjectId, name, "latest");
 
@@ -96,6 +101,7 @@ public sealed class SecretManagerSecretStore(SecretManagerClientFactory factory)
     /// </summary>
     public async Task DeleteSecretAsync(string name, CancellationToken ct)
     {
+        CallTrace.Request("SecretManagerSecretStore.DeleteSecretAsync");
         SecretManagerServiceClient client = factory.Create();
 
         await client.DeleteSecretAsync(new SecretName(factory.ProjectId, name), ct).ConfigureAwait(false);

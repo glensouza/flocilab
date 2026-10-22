@@ -27,6 +27,8 @@ public sealed class FirestoreDocumentDb(FirestoreClientFactory factory) : IDocum
 
     public string ServiceName => "Google Cloud Firestore";
 
+    public string? SourcePath => "samples/gcp/firestore/FlociLab.Gcp.Firestore.Demo/FirestoreDocumentDb.cs";
+
     // The same classifier FirestoreDemo uses for its probe, so the coverage matrix and the
     // comparison page can never disagree about whether an operation is unimplemented,
     // unreachable or genuinely broken. TimeSpan.Zero because only the status is wanted
@@ -35,6 +37,7 @@ public sealed class FirestoreDocumentDb(FirestoreClientFactory factory) : IDocum
 
     public async Task<IReadOnlyList<CollectionInfo>> ListCollectionsAsync(CancellationToken ct)
     {
+        CallTrace.Request("FirestoreDocumentDb.ListCollectionsAsync");
         FirestoreDb db = factory.Create();
         List<CollectionInfo> collections = [];
 
@@ -48,6 +51,7 @@ public sealed class FirestoreDocumentDb(FirestoreClientFactory factory) : IDocum
 
     public async Task CreateCollectionAsync(string name, CancellationToken ct)
     {
+        CallTrace.Request("FirestoreDocumentDb.CreateCollectionAsync");
         await factory.Create().Collection(name).Document(PlaceholderDocumentId)
             .SetAsync(new Dictionary<string, object> { ["id"] = PlaceholderDocumentId }, cancellationToken: ct)
             .ConfigureAwait(false);
@@ -60,6 +64,7 @@ public sealed class FirestoreDocumentDb(FirestoreClientFactory factory) : IDocum
     /// </summary>
     public async Task UpsertDocumentAsync(string collection, string id, string json, CancellationToken ct)
     {
+        CallTrace.Request("FirestoreDocumentDb.UpsertDocumentAsync");
         Dictionary<string, object?> fields = ParseFields(json);
         fields["id"] = id;
 
@@ -68,6 +73,7 @@ public sealed class FirestoreDocumentDb(FirestoreClientFactory factory) : IDocum
 
     public async Task<string?> GetDocumentAsync(string collection, string id, CancellationToken ct)
     {
+        CallTrace.Request("FirestoreDocumentDb.GetDocumentAsync");
         DocumentSnapshot snapshot = await factory.Create().Collection(collection).Document(id).GetSnapshotAsync(ct).ConfigureAwait(false);
 
         return snapshot.Exists ? JsonSerializer.Serialize(snapshot.ToDictionary()) : null;
@@ -75,6 +81,7 @@ public sealed class FirestoreDocumentDb(FirestoreClientFactory factory) : IDocum
 
     public async Task DeleteCollectionAsync(string name, CancellationToken ct)
     {
+        CallTrace.Request("FirestoreDocumentDb.DeleteCollectionAsync");
         FirestoreDb db = factory.Create();
         CollectionReference collectionRef = db.Collection(name);
         int deleted = 0;

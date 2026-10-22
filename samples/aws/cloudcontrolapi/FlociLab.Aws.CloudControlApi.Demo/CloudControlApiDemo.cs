@@ -23,6 +23,9 @@ namespace FlociLab.Aws.CloudControlApi;
 /// <c>GetResourceRequestStatus</c> says when it is done and what the resource is called. Every step
 /// reports what the engine actually answered rather than what the docs promise.
 /// </summary>
+[ServiceFinding("real Cloud Control lists queues", "real Cloud Control lists queues; floci lists only the types it has built a lister for")]
+[ServiceFinding("floci accepts a bucket that exists: real Cloud Control reports FAILED here, w...", "floci accepts a bucket that exists: real Cloud Control reports FAILED here, with AlreadyExists")]
+[ServiceFinding("real Cloud Control answers this", "real Cloud Control answers this; floci has not built it")]
 public sealed class CloudControlApiDemo(CloudControlApiClientFactory factory) : IServiceDemo
 {
     private const string BucketType = "AWS::S3::Bucket";

@@ -16,6 +16,8 @@ public sealed class SecretsManagerSecretStore(SecretsManagerClientFactory factor
 
     public string ServiceName => "AWS Secrets Manager";
 
+    public string? SourcePath => "samples/aws/secretsmanager/FlociLab.Aws.SecretsManager.Demo/SecretsManagerSecretStore.cs";
+
     // The same classifier SecretsManagerDemo uses for its probe, so the coverage matrix and the
     // comparison page can never disagree about whether an operation is unimplemented, unreachable
     // or genuinely broken. TimeSpan.Zero because only the status is wanted here — the comparison
@@ -24,6 +26,7 @@ public sealed class SecretsManagerSecretStore(SecretsManagerClientFactory factor
 
     public async Task<IReadOnlyList<SecretInfo>> ListSecretsAsync(CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nSecretsManagerSecretStore.ListSecretsAsync");
         using IAmazonSecretsManager client = factory.Create();
 
         List<SecretInfo> secrets = [];
@@ -65,6 +68,7 @@ public sealed class SecretsManagerSecretStore(SecretsManagerClientFactory factor
     /// </summary>
     public async Task SetSecretAsync(string name, string value, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nSecretsManagerSecretStore.SetSecretAsync");
         using IAmazonSecretsManager client = factory.Create();
 
         try
@@ -81,6 +85,7 @@ public sealed class SecretsManagerSecretStore(SecretsManagerClientFactory factor
 
     public async Task<string> GetSecretAsync(string name, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nSecretsManagerSecretStore.GetSecretAsync");
         using IAmazonSecretsManager client = factory.Create();
 
         GetSecretValueResponse response = await client.GetSecretValueAsync(
@@ -99,6 +104,7 @@ public sealed class SecretsManagerSecretStore(SecretsManagerClientFactory factor
     /// </summary>
     public async Task DeleteSecretAsync(string name, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nSecretsManagerSecretStore.DeleteSecretAsync");
         using IAmazonSecretsManager client = factory.Create();
 
         await client.DeleteSecretAsync(

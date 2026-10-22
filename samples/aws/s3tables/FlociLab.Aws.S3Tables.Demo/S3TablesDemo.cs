@@ -18,6 +18,9 @@ namespace FlociLab.Aws.S3Tables;
 /// gaps where it differs from AWS and to skip the one step that points a real table at a made-up file. Every step
 /// reports what the engine actually answered rather than what the docs promise.
 /// </summary>
+[ServiceFinding("real S3 Tables answers ConflictException for a table that already exists", "real S3 Tables answers ConflictException for a table that already exists; floci has started to accept it")]
+[ServiceFinding("real S3 Tables answers NotFoundException for a namespace that does not exist", "real S3 Tables answers NotFoundException for a namespace that does not exist; floci has started to accept it")]
+[ServiceFinding("real S3 Tables tags a table bucket and a table", "real S3 Tables tags a table bucket and a table; floci has not built tagging")]
 public sealed class S3TablesDemo(S3TablesClientFactory factory) : IServiceDemo
 {
     private const string Namespace = "sales";

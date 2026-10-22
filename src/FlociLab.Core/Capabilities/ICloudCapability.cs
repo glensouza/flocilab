@@ -15,6 +15,12 @@ public interface ICloudCapability
     string ServiceName { get; }
 
     /// <summary>
+    /// Repo-relative path of the file that implements this column, so the comparison cell can
+    /// link to it. Null when a column has not recorded one.
+    /// </summary>
+    string? SourcePath => null;
+
+    /// <summary>
     /// Classifies an exception thrown by this capability's own SDK into one of the four
     /// <see cref="ProbeStatus"/> outcomes.
     ///

@@ -21,6 +21,8 @@ public sealed class PubSubQueue(PubSubClientFactory factory) : IQueueCapability
 
     public string ServiceName => "Google Cloud Pub/Sub";
 
+    public string? SourcePath => "samples/gcp/pubsub/FlociLab.Gcp.PubSub.Demo/PubSubQueue.cs";
+
     // The same classifier PubSubDemo uses for its probe, so the coverage matrix and the
     // comparison page can never disagree about whether an operation is unimplemented,
     // unreachable or genuinely broken. TimeSpan.Zero because only the status is wanted
@@ -33,6 +35,7 @@ public sealed class PubSubQueue(PubSubClientFactory factory) : IQueueCapability
     /// </summary>
     public async Task<IReadOnlyList<QueueInfo>> ListQueuesAsync(CancellationToken ct)
     {
+        CallTrace.Request("PubSubQueue.ListQueuesAsync");
         SubscriberServiceApiClient subscriber = factory.Subscriber();
         List<QueueInfo> queues = [];
 
@@ -48,6 +51,7 @@ public sealed class PubSubQueue(PubSubClientFactory factory) : IQueueCapability
 
     public async Task CreateQueueAsync(string name, CancellationToken ct)
     {
+        CallTrace.Request("PubSubQueue.CreateQueueAsync");
         PublisherServiceApiClient publisher = factory.Publisher();
         SubscriberServiceApiClient subscriber = factory.Subscriber();
         TopicName topicName = TopicName.FromProjectTopic(factory.ProjectId, name);
@@ -60,6 +64,7 @@ public sealed class PubSubQueue(PubSubClientFactory factory) : IQueueCapability
 
     public async Task SendMessageAsync(string queue, string body, CancellationToken ct)
     {
+        CallTrace.Request("PubSubQueue.SendMessageAsync");
         PublisherServiceApiClient publisher = factory.Publisher();
         TopicName topicName = TopicName.FromProjectTopic(factory.ProjectId, queue);
 
@@ -72,6 +77,7 @@ public sealed class PubSubQueue(PubSubClientFactory factory) : IQueueCapability
     /// reappear once that deadline expires.</summary>
     public async Task<IReadOnlyList<QueueMessage>> ReceiveMessagesAsync(string queue, int maxMessages, CancellationToken ct)
     {
+        CallTrace.Request("PubSubQueue.ReceiveMessagesAsync");
         SubscriberServiceApiClient subscriber = factory.Subscriber();
         SubscriptionName subscriptionName = SubscriptionName.FromProjectSubscription(factory.ProjectId, queue);
 
@@ -105,6 +111,7 @@ public sealed class PubSubQueue(PubSubClientFactory factory) : IQueueCapability
     /// </summary>
     public async Task DeleteQueueAsync(string name, CancellationToken ct)
     {
+        CallTrace.Request("PubSubQueue.DeleteQueueAsync");
         SubscriberServiceApiClient subscriber = factory.Subscriber();
         PublisherServiceApiClient publisher = factory.Publisher();
 

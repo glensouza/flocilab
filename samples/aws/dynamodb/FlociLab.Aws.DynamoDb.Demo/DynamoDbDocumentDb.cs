@@ -17,6 +17,8 @@ public sealed class DynamoDbDocumentDb(DynamoDbClientFactory factory) : IDocumen
 
     public string ServiceName => "Amazon DynamoDB";
 
+    public string? SourcePath => "samples/aws/dynamodb/FlociLab.Aws.DynamoDb.Demo/DynamoDbDocumentDb.cs";
+
     // The same classifier DynamoDbDemo uses for its probe, so the coverage matrix and the
     // comparison page can never disagree about whether an operation is unimplemented,
     // unreachable or genuinely broken. TimeSpan.Zero because only the status is wanted
@@ -25,6 +27,7 @@ public sealed class DynamoDbDocumentDb(DynamoDbClientFactory factory) : IDocumen
 
     public async Task<IReadOnlyList<CollectionInfo>> ListCollectionsAsync(CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nDynamoDbDocumentDb.ListCollectionsAsync");
         using IAmazonDynamoDB client = factory.Create();
 
         List<CollectionInfo> tables = [];
@@ -51,6 +54,7 @@ public sealed class DynamoDbDocumentDb(DynamoDbClientFactory factory) : IDocumen
     /// keys on the same way.</summary>
     public async Task CreateCollectionAsync(string name, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nDynamoDbDocumentDb.CreateCollectionAsync");
         using IAmazonDynamoDB client = factory.Create();
 
         CreateTableResponse response = await client.CreateTableAsync(new CreateTableRequest
@@ -99,6 +103,7 @@ public sealed class DynamoDbDocumentDb(DynamoDbClientFactory factory) : IDocumen
     /// </summary>
     public async Task UpsertDocumentAsync(string collection, string id, string json, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nDynamoDbDocumentDb.UpsertDocumentAsync");
         using IAmazonDynamoDB client = factory.Create();
 
         Document document = Document.FromJson(json);
@@ -113,6 +118,7 @@ public sealed class DynamoDbDocumentDb(DynamoDbClientFactory factory) : IDocumen
 
     public async Task<string?> GetDocumentAsync(string collection, string id, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nDynamoDbDocumentDb.GetDocumentAsync");
         using IAmazonDynamoDB client = factory.Create();
 
         GetItemResponse response = await client.GetItemAsync(new GetItemRequest
@@ -126,6 +132,7 @@ public sealed class DynamoDbDocumentDb(DynamoDbClientFactory factory) : IDocumen
 
     public async Task DeleteCollectionAsync(string name, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nDynamoDbDocumentDb.DeleteCollectionAsync");
         using IAmazonDynamoDB client = factory.Create();
         await client.DeleteTableAsync(new DeleteTableRequest { TableName = name }, ct).ConfigureAwait(false);
     }

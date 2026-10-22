@@ -1,0 +1,25 @@
+details {
+    margin-top: 0.35rem;
+}
+
+details summary {
+    cursor: pointer;
+    color: var(--fg-muted);
+    font-size: 0.8rem;
+}
+
+.wire {
+    margin: 0.35rem 0 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-size: 0.75rem;
+}
+
+.cell-links {
+    margin-top: 0.3rem;
+    font-size: 0.8rem;
+}
+
+.cell-links a + a {
+    margin-left: 0.6rem;
+}

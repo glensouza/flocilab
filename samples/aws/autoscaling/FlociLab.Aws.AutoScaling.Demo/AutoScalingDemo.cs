@@ -26,6 +26,9 @@ namespace FlociLab.Aws.AutoScaling;
 /// template, and that is an EC2 call, which would be a second SDK package (constraint 1).
 /// </para>
 /// </summary>
+[ServiceFinding("Emulator difference", "floci starts a real EC2 container for each instance a group wants")]
+[ServiceFinding("real Auto Scaling refuses a minimum above the maximum with ValidationError", "real Auto Scaling refuses a minimum above the maximum with ValidationError; floci does not check")]
+[ServiceFinding("real Auto Scaling refuses a launch configuration it cannot find with Validati...", "real Auto Scaling refuses a launch configuration it cannot find with ValidationError; floci does not check")]
 public sealed class AutoScalingDemo(AutoScalingClientFactory factory) : IServiceDemo
 {
     private const string ImageId = "ami-12345678";

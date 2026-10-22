@@ -19,6 +19,8 @@ public sealed class ServiceBusQueue(ServiceBusClientFactory factory) : IQueueCap
 
     public string ServiceName => "Azure Service Bus";
 
+    public string? SourcePath => "samples/azure/servicebus/FlociLab.Azure.ServiceBus.Demo/ServiceBusQueue.cs";
+
     // The same classifier ServiceBusDemo uses for its probe, so the coverage matrix and the
     // comparison page can never disagree about whether an operation is unimplemented, unreachable
     // or genuinely broken.
@@ -26,6 +28,7 @@ public sealed class ServiceBusQueue(ServiceBusClientFactory factory) : IQueueCap
 
     public async Task<IReadOnlyList<QueueInfo>> ListQueuesAsync(CancellationToken ct)
     {
+        CallTrace.Request("ServiceBusQueue.ListQueuesAsync");
         ServiceBusAdministrationClient admin = factory.CreateAdministrationClient();
         List<QueueInfo> queues = [];
 
@@ -39,12 +42,14 @@ public sealed class ServiceBusQueue(ServiceBusClientFactory factory) : IQueueCap
 
     public async Task CreateQueueAsync(string name, CancellationToken ct)
     {
+        CallTrace.Request("ServiceBusQueue.CreateQueueAsync");
         ServiceBusAdministrationClient admin = factory.CreateAdministrationClient();
         await admin.CreateQueueAsync(name, ct).ConfigureAwait(false);
     }
 
     public async Task SendMessageAsync(string queue, string body, CancellationToken ct)
     {
+        CallTrace.Request("ServiceBusQueue.SendMessageAsync");
         await using ServiceBusClient client = factory.CreateClient();
         await using ServiceBusSender sender = client.CreateSender(queue);
 
@@ -59,6 +64,7 @@ public sealed class ServiceBusQueue(ServiceBusClientFactory factory) : IQueueCap
     /// </summary>
     public async Task<IReadOnlyList<QueueMessage>> ReceiveMessagesAsync(string queue, int maxMessages, CancellationToken ct)
     {
+        CallTrace.Request("ServiceBusQueue.ReceiveMessagesAsync");
         // A guard, not a clamp on the low side: this method completes what it returns, so clamping
         // 0 up to 1 would dequeue and permanently remove a message the caller never asked for and
         // never gets back.
@@ -103,6 +109,7 @@ public sealed class ServiceBusQueue(ServiceBusClientFactory factory) : IQueueCap
     /// </summary>
     public async Task DeleteQueueAsync(string name, CancellationToken ct)
     {
+        CallTrace.Request("ServiceBusQueue.DeleteQueueAsync");
         ServiceBusAdministrationClient admin = factory.CreateAdministrationClient();
         await admin.DeleteQueueAsync(name, ct).ConfigureAwait(false);
     }

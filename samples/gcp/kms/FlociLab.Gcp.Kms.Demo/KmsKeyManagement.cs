@@ -26,6 +26,8 @@ public sealed class KmsKeyManagement(KmsClientFactory factory) : IKeyManagementC
 
     public string ServiceName => "Google Cloud KMS";
 
+    public string? SourcePath => "samples/gcp/kms/FlociLab.Gcp.Kms.Demo/KmsKeyManagement.cs";
+
     // The same classifier KmsDemo uses for its probe, so the coverage matrix and the comparison
     // page can never disagree about whether an operation is unimplemented, unreachable or
     // genuinely broken. TimeSpan.Zero because only the status is wanted here — the comparison page
@@ -34,6 +36,7 @@ public sealed class KmsKeyManagement(KmsClientFactory factory) : IKeyManagementC
 
     public async Task<IReadOnlyList<KeyInfo>> ListKeysAsync(CancellationToken ct)
     {
+        CallTrace.Request("KmsKeyManagement.ListKeysAsync");
         KeyManagementServiceClient client = factory.Create();
         LocationName location = new(factory.ProjectId, factory.LocationId);
         List<KeyInfo> keys = [];
@@ -59,6 +62,7 @@ public sealed class KmsKeyManagement(KmsClientFactory factory) : IKeyManagementC
     /// </summary>
     public async Task<string> CreateKeyAsync(string name, CancellationToken ct)
     {
+        CallTrace.Request("KmsKeyManagement.CreateKeyAsync");
         KeyManagementServiceClient client = factory.Create();
         LocationName location = new(factory.ProjectId, factory.LocationId);
         KeyRingName keyRingName = new(factory.ProjectId, factory.LocationId, KeyRingId);
@@ -100,6 +104,7 @@ public sealed class KmsKeyManagement(KmsClientFactory factory) : IKeyManagementC
 
     public async Task<byte[]> EncryptAsync(string keyId, byte[] plaintext, CancellationToken ct)
     {
+        CallTrace.Request("KmsKeyManagement.EncryptAsync");
         KeyManagementServiceClient client = factory.Create();
 
         EncryptResponse response = await client.EncryptAsync(
@@ -110,6 +115,7 @@ public sealed class KmsKeyManagement(KmsClientFactory factory) : IKeyManagementC
 
     public async Task<byte[]> DecryptAsync(string keyId, byte[] ciphertext, CancellationToken ct)
     {
+        CallTrace.Request("KmsKeyManagement.DecryptAsync");
         KeyManagementServiceClient client = factory.Create();
 
         DecryptResponse response = await client.DecryptAsync(
@@ -126,6 +132,7 @@ public sealed class KmsKeyManagement(KmsClientFactory factory) : IKeyManagementC
     /// </summary>
     public async Task DeleteKeyAsync(string keyId, CancellationToken ct)
     {
+        CallTrace.Request("KmsKeyManagement.DeleteKeyAsync");
         KeyManagementServiceClient client = factory.Create();
         CryptoKeyName cryptoKeyName = CryptoKeyName.Parse(keyId);
         int destroyed = 0;

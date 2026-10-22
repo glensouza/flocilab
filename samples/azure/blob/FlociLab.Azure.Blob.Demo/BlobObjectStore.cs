@@ -16,6 +16,8 @@ public sealed class BlobObjectStore(BlobClientFactory factory) : IObjectStoreCap
 
     public string ServiceName => "Azure Blob Storage";
 
+    public string? SourcePath => "samples/azure/blob/FlociLab.Azure.Blob.Demo/BlobObjectStore.cs";
+
     // The same classifier BlobDemo uses for its probe, so the coverage matrix and the
     // comparison page can never disagree about whether an operation is unimplemented,
     // unreachable or genuinely broken. TimeSpan.Zero because only the status is wanted
@@ -28,6 +30,7 @@ public sealed class BlobObjectStore(BlobClientFactory factory) : IObjectStoreCap
     /// </summary>
     public async Task<IReadOnlyList<ContainerInfo>> ListContainersAsync(CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nBlobObjectStore.ListContainersAsync");
         BlobServiceClient client = factory.Create();
         List<ContainerInfo> containers = [];
 
@@ -41,12 +44,14 @@ public sealed class BlobObjectStore(BlobClientFactory factory) : IObjectStoreCap
 
     public async Task CreateContainerAsync(string name, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nBlobObjectStore.CreateContainerAsync");
         BlobServiceClient client = factory.Create();
         await client.CreateBlobContainerAsync(name, cancellationToken: ct).ConfigureAwait(false);
     }
 
     public async Task PutObjectAsync(string container, string key, Stream data, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nBlobObjectStore.PutObjectAsync");
         BlobServiceClient client = factory.Create();
         BlobClient blob = client.GetBlobContainerClient(container).GetBlobClient(key);
 
@@ -59,6 +64,7 @@ public sealed class BlobObjectStore(BlobClientFactory factory) : IObjectStoreCap
     /// </summary>
     public async Task<Stream> GetObjectAsync(string container, string key, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nBlobObjectStore.GetObjectAsync");
         BlobServiceClient client = factory.Create();
         BlobClient blob = client.GetBlobContainerClient(container).GetBlobClient(key);
 
@@ -75,6 +81,7 @@ public sealed class BlobObjectStore(BlobClientFactory factory) : IObjectStoreCap
     /// </summary>
     public async Task DeleteContainerAsync(string name, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nBlobObjectStore.DeleteContainerAsync");
         BlobServiceClient client = factory.Create();
         await client.DeleteBlobContainerAsync(name, cancellationToken: ct).ConfigureAwait(false);
     }

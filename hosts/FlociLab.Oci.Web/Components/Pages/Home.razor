@@ -1,14 +1,15 @@
 @page "/"
+@inject IDemoCatalog Catalog
 
 <PageTitle>FlociLab OCI</PageTitle>
 
 <h1>FlociLab OCI</h1>
 
 <p class="lede">
-    OCI samples only — this app references <code>FlociLab.Core</code> and
-    <code>FlociLab.Oci.ObjectStorage.Demo</code> and nothing else, so it is the standalone
-    artifact: clone <code>hosts/FlociLab.Oci.Web</code> plus the samples it references and you have
-    an OCI demo with no other cloud SDK anywhere in the dependency tree.
+    OCI samples only — @this.Catalog.Demos.Count of them. This host references
+    <code>FlociLab.Core</code> and the OCI sample libraries, and no other cloud SDK, so it is the
+    standalone artifact: clone <code>hosts/FlociLab.Oci.Web</code> plus the samples it references
+    and you have an OCI demo with nothing else in the dependency tree.
 </p>
 
 <p>
@@ -31,8 +32,9 @@
 </table>
 
 <p class="note">
-    The Floci web console has no OCI support at all, verified against the shipped binary — this app
-    is the only place these samples are visible.
+    The Floci web console on port 4500 covers OCI from floci-ui 0.6.0. Nothing this app starts
+    brings it up — it comes with the Aspire AppHost, which runs <code>FlociLab.All.Web</code>
+    rather than this host.
 </p>
 
 <p class="note">

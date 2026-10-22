@@ -36,6 +36,8 @@ public sealed class OciVault(VaultClientFactory factory) : IKeyManagementCapabil
 
     public string ServiceName => "OCI Vault";
 
+    public string? SourcePath => "samples/oci/vault/FlociLab.Oci.Vault.Demo/OciVault.cs";
+
     // The same classifier VaultDemo uses for its probe, so the coverage matrix and the comparison
     // page can never disagree about whether an operation is unimplemented, unreachable or
     // genuinely broken. TimeSpan.Zero because only the status is wanted here — the comparison page
@@ -44,6 +46,7 @@ public sealed class OciVault(VaultClientFactory factory) : IKeyManagementCapabil
 
     public async Task<IReadOnlyList<KeyInfo>> ListKeysAsync(CancellationToken ct)
     {
+        CallTrace.Request($"{factory.Endpoint}\nOciVault.ListKeysAsync");
         KmsVaultClient vaultClient = factory.CreateVault();
 
         // Finds, never creates. A read that provisioned a vault as a side effect would leave real,
@@ -79,6 +82,7 @@ public sealed class OciVault(VaultClientFactory factory) : IKeyManagementCapabil
     /// </summary>
     public async Task<string> CreateKeyAsync(string name, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.Endpoint}\nOciVault.CreateKeyAsync");
         KmsVaultClient vaultClient = factory.CreateVault();
         VaultModel vault = await GetOrCreateVaultAsync(vaultClient, ct).ConfigureAwait(false);
 
@@ -101,6 +105,7 @@ public sealed class OciVault(VaultClientFactory factory) : IKeyManagementCapabil
 
     public async Task<byte[]> EncryptAsync(string keyId, byte[] plaintext, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.Endpoint}\nOciVault.EncryptAsync");
         KmsVaultClient vaultClient = factory.CreateVault();
         VaultModel vault = await GetOrCreateVaultAsync(vaultClient, ct).ConfigureAwait(false);
 
@@ -117,6 +122,7 @@ public sealed class OciVault(VaultClientFactory factory) : IKeyManagementCapabil
 
     public async Task<byte[]> DecryptAsync(string keyId, byte[] ciphertext, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.Endpoint}\nOciVault.DecryptAsync");
         KmsVaultClient vaultClient = factory.CreateVault();
         VaultModel vault = await GetOrCreateVaultAsync(vaultClient, ct).ConfigureAwait(false);
 
@@ -134,6 +140,7 @@ public sealed class OciVault(VaultClientFactory factory) : IKeyManagementCapabil
     /// <summary>Schedules the key's deletion — the closest OCI Vault gets to "delete"; real Vault never removes a key synchronously.</summary>
     public async Task DeleteKeyAsync(string keyId, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.Endpoint}\nOciVault.DeleteKeyAsync");
         KmsVaultClient vaultClient = factory.CreateVault();
         VaultModel vault = await GetOrCreateVaultAsync(vaultClient, ct).ConfigureAwait(false);
 

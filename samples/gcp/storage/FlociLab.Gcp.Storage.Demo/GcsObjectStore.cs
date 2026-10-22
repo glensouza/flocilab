@@ -17,6 +17,8 @@ public sealed class GcsObjectStore(StorageClientFactory factory) : IObjectStoreC
 
     public string ServiceName => "Google Cloud Storage";
 
+    public string? SourcePath => "samples/gcp/storage/FlociLab.Gcp.Storage.Demo/GcsObjectStore.cs";
+
     // The same classifier StorageDemo uses for its probe, so the coverage matrix and the
     // comparison page can never disagree about whether an operation is unimplemented,
     // unreachable or genuinely broken. TimeSpan.Zero because only the status is wanted
@@ -30,6 +32,7 @@ public sealed class GcsObjectStore(StorageClientFactory factory) : IObjectStoreC
     /// </summary>
     public async Task<IReadOnlyList<ContainerInfo>> ListContainersAsync(CancellationToken ct)
     {
+        CallTrace.Request($"{factory.BaseUri}\nGcsObjectStore.ListContainersAsync");
         // No using: the factory owns this client for the process lifetime now and disposes it
         // itself. Disposing it here would close the shared connection pool underneath every
         // other call — see StorageClientFactory.Create.
@@ -46,12 +49,14 @@ public sealed class GcsObjectStore(StorageClientFactory factory) : IObjectStoreC
 
     public async Task CreateContainerAsync(string name, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.BaseUri}\nGcsObjectStore.CreateContainerAsync");
         StorageClient client = factory.Create();
         await client.CreateBucketAsync(factory.ProjectId, name, cancellationToken: ct).ConfigureAwait(false);
     }
 
     public async Task PutObjectAsync(string container, string key, Stream data, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.BaseUri}\nGcsObjectStore.PutObjectAsync");
         StorageClient client = factory.Create();
 
         // Null content type: the SDK falls back to application/octet-stream, which is the right
@@ -66,6 +71,7 @@ public sealed class GcsObjectStore(StorageClientFactory factory) : IObjectStoreC
     /// </summary>
     public async Task<Stream> GetObjectAsync(string container, string key, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.BaseUri}\nGcsObjectStore.GetObjectAsync");
         StorageClient client = factory.Create();
 
         MemoryStream buffer = new();
@@ -89,6 +95,7 @@ public sealed class GcsObjectStore(StorageClientFactory factory) : IObjectStoreC
     /// </summary>
     public async Task DeleteContainerAsync(string name, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.BaseUri}\nGcsObjectStore.DeleteContainerAsync");
         StorageClient client = factory.Create();
 
         await foreach (GcsObject stored in client.ListObjectsAsync(name, prefix: null).WithCancellation(ct).ConfigureAwait(false))

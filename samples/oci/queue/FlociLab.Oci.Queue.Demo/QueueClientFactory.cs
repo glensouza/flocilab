@@ -51,9 +51,10 @@ public sealed class QueueClientFactory(OciEndpoints endpoints) : IDisposable
     /// floci-oci does not derive that endpoint from the request. It answers
     /// <c>http://{FLOCI_OCI_HOSTNAME}:4599</c>, falling back to the literal <c>localhost</c> when
     /// that variable is unset, and it ignores the <c>Host</c> header entirely — verified by curl
-    /// against floci-oci 0.3.0 both ways, 2026-09-02. The AppHost deliberately leaves
-    /// <c>FLOCI_OCI_HOSTNAME</c> unset (see <c>FLOCI_HOSTNAME</c> in <c>AppHost.cs</c>), so under
-    /// the lab every queue reports <c>http://localhost:4599</c>. That string reaches this emulator
+    /// against floci-oci 0.3.0 both ways, 2026-09-02. The AppHost now sets
+    /// <c>FLOCI_OCI_HOSTNAME</c> (see <c>AppHost.cs</c>): <c>127.0.0.1</c> unless container-backed
+    /// services are on, in which case <c>floci-oci</c>. A throwaway test container still leaves it
+    /// unset, so those runs report <c>http://localhost:4599</c>. That string reaches this emulator
     /// only when the caller is on the host *and* the published port is still the default one: it
     /// reaches nothing from a sibling container on the <c>floci</c> network, and nothing under
     /// Testcontainers, where the port is randomly mapped. It is also precisely the <c>localhost</c>

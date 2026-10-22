@@ -2,6 +2,7 @@
 @inject IEmulatorHealthProbe HealthProbe
 @inject ICoverageMatrix Matrix
 @inject IDemoCatalog Catalog
+@inject ICoverageSnapshotStore Snapshots
 @implements IDisposable
 
 <PageTitle>Coverage matrix</PageTitle>
@@ -21,8 +22,14 @@
     @if (this.lastRun is not null)
     {
         <span class="note">Last run @this.lastRun.Value.ToLocalTime().ToString("HH:mm:ss")</span>
+        <a href="/coverage.json">Download snapshot</a>
     }
 </div>
+
+<p class="note">
+    <code>/coverage.json</code> is this process's last probe.
+    <code>?refresh=true</code> probes again, which is the file to diff after a Floci release.
+</p>
 
 <h2>Emulators</h2>
 
@@ -138,6 +145,7 @@ else
 
             this.health = await healthTask;
             this.coverage = await coverageTask;
+            this.Snapshots.Save(this.health, this.coverage);
             this.lastRun = DateTimeOffset.Now;
         }
         catch (OperationCanceledException)

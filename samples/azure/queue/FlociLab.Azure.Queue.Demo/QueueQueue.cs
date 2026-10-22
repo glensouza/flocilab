@@ -18,6 +18,8 @@ public sealed class QueueQueue(QueueClientFactory factory) : IQueueCapability
 
     public string ServiceName => "Azure Queue Storage";
 
+    public string? SourcePath => "samples/azure/queue/FlociLab.Azure.Queue.Demo/QueueQueue.cs";
+
     // The same classifier QueueDemo uses for its probe, so the coverage matrix and the
     // comparison page can never disagree about whether an operation is unimplemented,
     // unreachable or genuinely broken. TimeSpan.Zero because only the status is wanted
@@ -26,6 +28,7 @@ public sealed class QueueQueue(QueueClientFactory factory) : IQueueCapability
 
     public async Task<IReadOnlyList<QueueInfo>> ListQueuesAsync(CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nQueueQueue.ListQueuesAsync");
         QueueServiceClient client = factory.Create();
         List<QueueInfo> queues = [];
 
@@ -39,12 +42,14 @@ public sealed class QueueQueue(QueueClientFactory factory) : IQueueCapability
 
     public async Task CreateQueueAsync(string name, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nQueueQueue.CreateQueueAsync");
         QueueServiceClient client = factory.Create();
         await client.CreateQueueAsync(name, cancellationToken: ct).ConfigureAwait(false);
     }
 
     public async Task SendMessageAsync(string queue, string body, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nQueueQueue.SendMessageAsync");
         QueueServiceClient client = factory.Create();
         QueueClient queueClient = client.GetQueueClient(queue);
 
@@ -60,6 +65,7 @@ public sealed class QueueQueue(QueueClientFactory factory) : IQueueCapability
     /// </summary>
     public async Task<IReadOnlyList<QueueMessage>> ReceiveMessagesAsync(string queue, int maxMessages, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nQueueQueue.ReceiveMessagesAsync");
         // A guard, not a clamp on the low side: this method deletes what it returns, so clamping 0
         // up to 1 would dequeue and permanently ack a message the caller never asked for and never
         // gets back.
@@ -104,6 +110,7 @@ public sealed class QueueQueue(QueueClientFactory factory) : IQueueCapability
 
     public async Task DeleteQueueAsync(string name, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nQueueQueue.DeleteQueueAsync");
         QueueServiceClient client = factory.Create();
         QueueClient queueClient = client.GetQueueClient(name);
 

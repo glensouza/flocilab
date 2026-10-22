@@ -1,0 +1,58 @@
+@page "/differences"
+@using System.Reflection
+@inject IDemoCatalog Catalog
+
+<PageTitle>Known differences — FlociLab</PageTitle>
+
+<h1>Known differences</h1>
+
+<p class="lede">
+    Where a sample has recorded that the emulator disagrees with the real service. Each sentence
+    is the one that sample already shows in its own round-trip. A service with no row here has
+    not recorded a difference, which is not the same as matching the real service.
+</p>
+
+@if (this.Groups.Count == 0)
+{
+    <p class="empty">
+        No sample has recorded a difference yet. They show up here when the demo class carries a
+        <code>ServiceFinding</code>.
+    </p>
+}
+else
+{
+    @foreach (ProviderFindings group in this.Groups)
+    {
+        <h2>@CloudProvider.DisplayName(group.Provider)</h2>
+
+        @foreach (DemoFindings demo in group.Demos)
+        {
+            <h3><a href="@demo.Demo.Route">@demo.Demo.DisplayName</a></h3>
+            <ul>
+                @foreach (ServiceFindingAttribute finding in demo.Findings)
+                {
+                    <li>
+                        <strong>@finding.Title.</strong>
+                        @finding.Detail
+                    </li>
+                }
+            </ul>
+        }
+    }
+}
+
+@code {
+    private IReadOnlyList<ProviderFindings> Groups => [.. this.Catalog.ByProvider
+        .Select(group => new ProviderFindings(
+            group.Provider,
+            [.. group.Demos
+                .Select(demo => new DemoFindings(
+                    demo,
+                    [.. demo.GetType().GetCustomAttributes<ServiceFindingAttribute>()]))
+                .Where(demo => demo.Findings.Count != 0)]))
+        .Where(group => group.Demos.Count != 0)];
+
+    private sealed record ProviderFindings(string Provider, IReadOnlyList<DemoFindings> Demos);
+
+    private sealed record DemoFindings(IServiceDemo Demo, IReadOnlyList<ServiceFindingAttribute> Findings);
+}

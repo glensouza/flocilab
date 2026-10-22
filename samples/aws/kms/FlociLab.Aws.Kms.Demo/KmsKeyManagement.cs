@@ -16,6 +16,8 @@ public sealed class KmsKeyManagement(KmsClientFactory factory) : IKeyManagementC
 
     public string ServiceName => "AWS KMS";
 
+    public string? SourcePath => "samples/aws/kms/FlociLab.Aws.Kms.Demo/KmsKeyManagement.cs";
+
     // The same classifier KmsDemo uses for its probe, so the coverage matrix and the
     // comparison page can never disagree about whether an operation is unimplemented,
     // unreachable or genuinely broken. TimeSpan.Zero because only the status is wanted
@@ -24,6 +26,7 @@ public sealed class KmsKeyManagement(KmsClientFactory factory) : IKeyManagementC
 
     public async Task<IReadOnlyList<KeyInfo>> ListKeysAsync(CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nKmsKeyManagement.ListKeysAsync");
         using IAmazonKeyManagementService client = factory.Create();
 
         List<KeyInfo> keys = [];
@@ -54,6 +57,7 @@ public sealed class KmsKeyManagement(KmsClientFactory factory) : IKeyManagementC
     /// gesture maps onto.</summary>
     public async Task<string> CreateKeyAsync(string name, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nKmsKeyManagement.CreateKeyAsync");
         using IAmazonKeyManagementService client = factory.Create();
 
         CreateKeyResponse response = await client.CreateKeyAsync(
@@ -64,6 +68,7 @@ public sealed class KmsKeyManagement(KmsClientFactory factory) : IKeyManagementC
 
     public async Task<byte[]> EncryptAsync(string keyId, byte[] plaintext, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nKmsKeyManagement.EncryptAsync");
         using IAmazonKeyManagementService client = factory.Create();
 
         EncryptResponse response = await client.EncryptAsync(
@@ -74,6 +79,7 @@ public sealed class KmsKeyManagement(KmsClientFactory factory) : IKeyManagementC
 
     public async Task<byte[]> DecryptAsync(string keyId, byte[] ciphertext, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nKmsKeyManagement.DecryptAsync");
         using IAmazonKeyManagementService client = factory.Create();
 
         DecryptResponse response = await client.DecryptAsync(
@@ -90,6 +96,7 @@ public sealed class KmsKeyManagement(KmsClientFactory factory) : IKeyManagementC
     /// </summary>
     public async Task DeleteKeyAsync(string keyId, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nKmsKeyManagement.DeleteKeyAsync");
         using IAmazonKeyManagementService client = factory.Create();
 
         await client.ScheduleKeyDeletionAsync(

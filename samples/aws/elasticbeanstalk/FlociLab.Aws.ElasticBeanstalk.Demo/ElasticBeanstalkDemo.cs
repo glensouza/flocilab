@@ -19,6 +19,9 @@ namespace FlociLab.Aws.ElasticBeanstalk;
 /// Elastic Beanstalk spends minutes provisioning instances, so the page does not wait for one.
 /// Every step reports what the engine actually answered rather than what the docs promise.
 /// </summary>
+[ServiceFinding("real Elastic Beanstalk accepts a configuration template", "real Elastic Beanstalk accepts a configuration template; floci has not built it")]
+[ServiceFinding("real Elastic Beanstalk refuses a second application of the same name with Inv...", "real Elastic Beanstalk refuses a second application of the same name with InvalidParameterValue; floci has started to accept it")]
+[ServiceFinding("real Elastic Beanstalk refuses to delete an application that has an environment", "real Elastic Beanstalk refuses to delete an application that has an environment; floci has started to accept it")]
 public sealed class ElasticBeanstalkDemo(ElasticBeanstalkClientFactory factory) : IServiceDemo
 {
     private const string VersionLabel = "1.0.0";

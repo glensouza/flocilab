@@ -86,6 +86,7 @@ public static class ServiceCollectionExtensions
         services.TryAddSingleton<OciEndpoints>();
 
         services.TryAddSingleton<IEmulatorHealthProbe, HttpEmulatorHealthProbe>();
+        services.TryAddSingleton<ICoverageSnapshotStore, CoverageSnapshotStore>();
         services.TryAddScoped<IDemoCatalog, DemoCatalog>();
         services.TryAddScoped<ICoverageMatrix, CoverageMatrix>();
 

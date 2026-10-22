@@ -81,12 +81,15 @@ else
                                 }
                                 else
                                 {
-                                    <span class="badge @BadgeClass(cell.Status)">@StatusLabel(cell.Status)</span>
-                                    @if (cell.Status != CellStatus.Skipped)
-                                    {
-                                        <div class="numeric note">@cell.Elapsed.TotalMilliseconds.ToString("0") ms</div>
-                                    }
-                                    <div class="detail">@cell.Detail</div>
+                                    <ComparisonCellView
+                                        Capability="keyManagement"
+                                        StatusClass="@BadgeClass(cell.Status)"
+                                        StatusLabel="@StatusLabel(cell.Status)"
+                                        ShowElapsed="@(cell.Status != CellStatus.Skipped)"
+                                        Elapsed="@cell.Elapsed"
+                                        Detail="@cell.Detail"
+                                        Request="@cell.Request"
+                                        Response="@cell.Response" />
                                 }
                             </td>
                         }
@@ -374,17 +377,11 @@ else
     private static async Task<ComparisonCell> TimeAsync(IKeyManagementCapability keyManagement, Func<Task<string>> operation)
     {
         Stopwatch stopwatch = Stopwatch.StartNew();
+        ComparisonTrace.TraceOutcome outcome = await ComparisonTrace.RunAsync(operation).ConfigureAwait(false);
 
-        try
-        {
-            string detail = await operation().ConfigureAwait(false);
-
-            return new ComparisonCell(CellStatus.Ok, stopwatch.Elapsed, detail);
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            return new ComparisonCell(FromProbe(keyManagement.Classify(ex)), stopwatch.Elapsed, ex.Message);
-        }
+        return outcome.Error is null
+            ? new ComparisonCell(CellStatus.Ok, stopwatch.Elapsed, outcome.Detail, outcome.Request, outcome.Response)
+            : new ComparisonCell(FromProbe(keyManagement.Classify(outcome.Error)), stopwatch.Elapsed, outcome.Detail, outcome.Request, outcome.Response);
     }
 
     private static CellStatus FromProbe(ProbeStatus status) => status switch
@@ -426,7 +423,7 @@ else
         Skipped,
     }
 
-    private sealed record ComparisonCell(CellStatus Status, TimeSpan Elapsed, string Detail);
+    private sealed record ComparisonCell(CellStatus Status, TimeSpan Elapsed, string Detail, string? Request = null, string? Response = null);
 
     public void Dispose()
     {

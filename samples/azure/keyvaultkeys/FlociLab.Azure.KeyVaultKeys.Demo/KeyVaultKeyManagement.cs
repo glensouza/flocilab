@@ -18,6 +18,8 @@ public sealed class KeyVaultKeyManagement(KeyVaultKeysClientFactory factory) : I
 
     public string ServiceName => "Azure Key Vault";
 
+    public string? SourcePath => "samples/azure/keyvaultkeys/FlociLab.Azure.KeyVaultKeys.Demo/KeyVaultKeyManagement.cs";
+
     // The same classifier KeyVaultKeysDemo uses for its probe, so the coverage matrix and the
     // comparison page can never disagree about whether an operation is unimplemented, unreachable
     // or genuinely broken. TimeSpan.Zero because only the status is wanted here — the comparison
@@ -26,6 +28,7 @@ public sealed class KeyVaultKeyManagement(KeyVaultKeysClientFactory factory) : I
 
     public async Task<IReadOnlyList<KeyInfo>> ListKeysAsync(CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nKeyVaultKeyManagement.ListKeysAsync");
         KeyClient client = factory.Create();
         List<KeyInfo> keys = [];
 
@@ -42,6 +45,7 @@ public sealed class KeyVaultKeyManagement(KeyVaultKeysClientFactory factory) : I
 
     public async Task<string> CreateKeyAsync(string name, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nKeyVaultKeyManagement.CreateKeyAsync");
         KeyClient client = factory.Create();
 
         try
@@ -65,6 +69,7 @@ public sealed class KeyVaultKeyManagement(KeyVaultKeysClientFactory factory) : I
 
     public async Task<byte[]> EncryptAsync(string keyId, byte[] plaintext, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nKeyVaultKeyManagement.EncryptAsync");
         CryptographyClient crypto = factory.CreateCryptographyClient(new Uri(keyId));
         EncryptResult result = await crypto.EncryptAsync(EncryptionAlgorithm.RsaOaep, plaintext, ct).ConfigureAwait(false);
 
@@ -73,6 +78,7 @@ public sealed class KeyVaultKeyManagement(KeyVaultKeysClientFactory factory) : I
 
     public async Task<byte[]> DecryptAsync(string keyId, byte[] ciphertext, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nKeyVaultKeyManagement.DecryptAsync");
         CryptographyClient crypto = factory.CreateCryptographyClient(new Uri(keyId));
         DecryptResult result = await crypto.DecryptAsync(EncryptionAlgorithm.RsaOaep, ciphertext, ct).ConfigureAwait(false);
 
@@ -86,6 +92,7 @@ public sealed class KeyVaultKeyManagement(KeyVaultKeysClientFactory factory) : I
     /// </summary>
     public async Task DeleteKeyAsync(string keyId, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nKeyVaultKeyManagement.DeleteKeyAsync");
         KeyClient client = factory.Create();
 
         // Segments[2], not Segments[^1]. A Key Vault key id is /keys/{name}/{version}, and the id

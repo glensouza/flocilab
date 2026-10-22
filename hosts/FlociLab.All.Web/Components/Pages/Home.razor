@@ -1,26 +1,54 @@
 @page "/"
+@inject IDemoCatalog Catalog
 
 <PageTitle>FlociLab</PageTitle>
 
 <h1>FlociLab</h1>
 
 <p class="lede">
-    The same operation, run against four cloud emulators with four official SDKs, on one screen.
-    Every sample is a Razor Class Library with exactly one cloud package, so it can be lifted out
-    and run on its own.
+    One official SDK per service, run against the Floci emulators. The comparison pages run the
+    same operation on every cloud that has an analog. Each sample is a Razor Class Library with
+    one cloud package, and a <code>lab.cs</code> beside it that runs that sample's own round-trip.
 </p>
+
+<div class="toolbar">
+    <a class="button" href="/coverage">Coverage matrix</a>
+    <a class="button" href="/differences">Known differences</a>
+</div>
 
 <h2>Where things stand</h2>
 
-<p>
-    The spine is up: contracts, endpoint configuration for all four providers, Aspire orchestration
-    and the coverage matrix. No service demos are registered yet — those start with object storage
-    across all four clouds.
-</p>
+<table class="grid">
+    <thead>
+        <tr>
+            <th>Cloud</th>
+            <th>Samples</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (ProviderDemos group in this.Catalog.ByProvider)
+        {
+            <tr>
+                <td>@group.DisplayName</td>
+                <td class="numeric">@group.Demos.Count</td>
+            </tr>
+        }
+        <tr>
+            <td>Total</td>
+            <td class="numeric">@this.Catalog.Demos.Count</td>
+        </tr>
+    </tbody>
+</table>
 
-<p>
-    <a class="button" href="/coverage">Open the coverage matrix →</a>
-</p>
+<h2>Compare the same operation</h2>
+
+<ul>
+    <li><a href="/compare/object-storage">Object storage</a> — S3, Blob, GCS, OCI Object Storage</li>
+    <li><a href="/compare/queues">Queues</a> — SQS, Queue Storage, Service Bus, Pub/Sub, OCI Queue</li>
+    <li><a href="/compare/secrets">Secrets</a> — Secrets Manager, Key Vault, Secret Manager, OCI Vault Secrets</li>
+    <li><a href="/compare/document-db">Document DB</a> — DynamoDB, Cosmos DB, Firestore</li>
+    <li><a href="/compare/key-management">Key management</a> — KMS, Key Vault Keys, Cloud KMS, OCI Vault</li>
+</ul>
 
 <h2>The emulators</h2>
 
@@ -42,8 +70,8 @@
 
 <p class="note">
     The AppHost also starts the <a href="http://127.0.0.1:4500" target="_blank" rel="noopener">Floci
-    web console</a> on port 4500 — a separate product, and AWS/Azure/GCP only. This app is the OCI
-    story, and the side-by-side one.
+    web console</a> on port 4500. From floci-ui 0.6.0 it covers AWS, Azure, GCP and OCI. It is a
+    separate product: this app is the .NET round-trip, and the side-by-side one.
 </p>
 
 <p class="note">

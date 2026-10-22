@@ -1,0 +1,67 @@
+@using FlociLab.Core.Capabilities
+@using FlociLab.Core.Coverage
+@inject IDemoCatalog Catalog
+
+<span class="badge @StatusClass">@StatusLabel</span>
+@if (this.ShowElapsed)
+{
+    <div class="numeric note">@this.Elapsed.TotalMilliseconds.ToString("0") ms</div>
+}
+<div class="detail">@this.Detail</div>
+@if (this.Request is not null || this.Response is not null)
+{
+    <details>
+        <summary>Request and response</summary>
+        @if (this.Request is not null)
+        {
+            <pre class="wire">@this.Request</pre>
+        }
+        @if (this.Response is not null)
+        {
+            <pre class="wire">@this.Response</pre>
+        }
+    </details>
+}
+@if (this.DemoRoute is not null || this.SourceUrl is not null)
+{
+    <div class="cell-links">
+        @if (this.DemoRoute is not null)
+        {
+            <a href="@this.DemoRoute">Open the demo</a>
+        }
+        @if (this.SourceUrl is not null)
+        {
+            <a href="@this.SourceUrl" target="_blank" rel="noopener">Source</a>
+        }
+    </div>
+}
+
+@code {
+    [Parameter]
+    public required ICloudCapability Capability { get; set; }
+
+    [Parameter]
+    public required string StatusClass { get; set; }
+
+    [Parameter]
+    public required string StatusLabel { get; set; }
+
+    [Parameter]
+    public required bool ShowElapsed { get; set; }
+
+    [Parameter]
+    public required TimeSpan Elapsed { get; set; }
+
+    [Parameter]
+    public required string Detail { get; set; }
+
+    [Parameter]
+    public string? Request { get; set; }
+
+    [Parameter]
+    public string? Response { get; set; }
+
+    private string? DemoRoute => ComparisonLinks.DemoRoute(this.Catalog, this.Capability);
+
+    private string? SourceUrl => ComparisonLinks.SourceUrl(this.Capability.SourcePath);
+}

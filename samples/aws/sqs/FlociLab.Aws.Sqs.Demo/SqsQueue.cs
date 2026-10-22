@@ -17,6 +17,8 @@ public sealed class SqsQueue(SqsClientFactory factory) : IQueueCapability
 
     public string ServiceName => "Amazon SQS";
 
+    public string? SourcePath => "samples/aws/sqs/FlociLab.Aws.Sqs.Demo/SqsQueue.cs";
+
     // The same classifier SqsDemo uses for its probe, so the coverage matrix and the
     // comparison page can never disagree about whether an operation is unimplemented,
     // unreachable or genuinely broken. TimeSpan.Zero because only the status is wanted
@@ -27,6 +29,7 @@ public sealed class SqsQueue(SqsClientFactory factory) : IQueueCapability
     /// listing is name-first, so the comparison page needs one to normalize against.</summary>
     public async Task<IReadOnlyList<QueueInfo>> ListQueuesAsync(CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nSqsQueue.ListQueuesAsync");
         using IAmazonSQS client = factory.Create();
 
         List<QueueInfo> queues = [];
@@ -50,12 +53,14 @@ public sealed class SqsQueue(SqsClientFactory factory) : IQueueCapability
 
     public async Task CreateQueueAsync(string name, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nSqsQueue.CreateQueueAsync");
         using IAmazonSQS client = factory.Create();
         await client.CreateQueueAsync(new CreateQueueRequest { QueueName = name }, ct).ConfigureAwait(false);
     }
 
     public async Task SendMessageAsync(string queue, string body, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nSqsQueue.SendMessageAsync");
         using IAmazonSQS client = factory.Create();
         string queueUrl = await ResolveQueueUrlAsync(client, queue, ct).ConfigureAwait(false);
 
@@ -72,6 +77,7 @@ public sealed class SqsQueue(SqsClientFactory factory) : IQueueCapability
     /// </summary>
     public async Task<IReadOnlyList<QueueMessage>> ReceiveMessagesAsync(string queue, int maxMessages, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nSqsQueue.ReceiveMessagesAsync");
         using IAmazonSQS client = factory.Create();
         string queueUrl = await ResolveQueueUrlAsync(client, queue, ct).ConfigureAwait(false);
 
@@ -123,6 +129,7 @@ public sealed class SqsQueue(SqsClientFactory factory) : IQueueCapability
 
     public async Task DeleteQueueAsync(string name, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nSqsQueue.DeleteQueueAsync");
         using IAmazonSQS client = factory.Create();
         string queueUrl = await ResolveQueueUrlAsync(client, name, ct).ConfigureAwait(false);
 

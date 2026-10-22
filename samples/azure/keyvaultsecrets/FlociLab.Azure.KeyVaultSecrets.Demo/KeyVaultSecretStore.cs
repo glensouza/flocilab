@@ -16,6 +16,8 @@ public sealed class KeyVaultSecretStore(KeyVaultSecretsClientFactory factory) : 
 
     public string ServiceName => "Azure Key Vault";
 
+    public string? SourcePath => "samples/azure/keyvaultsecrets/FlociLab.Azure.KeyVaultSecrets.Demo/KeyVaultSecretStore.cs";
+
     // The same classifier KeyVaultSecretsDemo uses for its probe, so the coverage matrix and the
     // comparison page can never disagree about whether an operation is unimplemented, unreachable
     // or genuinely broken. TimeSpan.Zero because only the status is wanted here — the comparison
@@ -24,6 +26,7 @@ public sealed class KeyVaultSecretStore(KeyVaultSecretsClientFactory factory) : 
 
     public async Task<IReadOnlyList<SecretInfo>> ListSecretsAsync(CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nKeyVaultSecretStore.ListSecretsAsync");
         SecretClient client = factory.Create();
         List<SecretInfo> secrets = [];
 
@@ -44,6 +47,7 @@ public sealed class KeyVaultSecretStore(KeyVaultSecretsClientFactory factory) : 
     /// </summary>
     public async Task SetSecretAsync(string name, string value, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nKeyVaultSecretStore.SetSecretAsync");
         SecretClient client = factory.Create();
 
         await client.SetSecretAsync(name, value, ct).ConfigureAwait(false);
@@ -51,6 +55,7 @@ public sealed class KeyVaultSecretStore(KeyVaultSecretsClientFactory factory) : 
 
     public async Task<string> GetSecretAsync(string name, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nKeyVaultSecretStore.GetSecretAsync");
         SecretClient client = factory.Create();
         Response<KeyVaultSecret> response = await client.GetSecretAsync(name, cancellationToken: ct).ConfigureAwait(false);
 
@@ -64,6 +69,7 @@ public sealed class KeyVaultSecretStore(KeyVaultSecretsClientFactory factory) : 
     /// </summary>
     public async Task DeleteSecretAsync(string name, CancellationToken ct)
     {
+        CallTrace.Request($"{factory.ServiceUrl}\nKeyVaultSecretStore.DeleteSecretAsync");
         SecretClient client = factory.Create();
 
         DeleteSecretOperation operation = await client.StartDeleteSecretAsync(name, ct).ConfigureAwait(false);

@@ -1,14 +1,15 @@
 @page "/"
+@inject IDemoCatalog Catalog
 
 <PageTitle>FlociLab GCP</PageTitle>
 
 <h1>FlociLab GCP</h1>
 
 <p class="lede">
-    GCP samples only — this app references <code>FlociLab.Core</code> and
-    <code>FlociLab.Gcp.Storage.Demo</code> and nothing else, so it is the standalone artifact: clone
-    <code>hosts/FlociLab.Gcp.Web</code> plus the samples it references and you have a GCP demo with
-    no other cloud SDK anywhere in the dependency tree.
+    GCP samples only — @this.Catalog.Demos.Count of them. This host references
+    <code>FlociLab.Core</code> and the GCP sample libraries, and no other cloud SDK, so it is the
+    standalone artifact: clone <code>hosts/FlociLab.Gcp.Web</code> plus the samples it references
+    and you have a GCP demo with nothing else in the dependency tree.
 </p>
 
 <p>

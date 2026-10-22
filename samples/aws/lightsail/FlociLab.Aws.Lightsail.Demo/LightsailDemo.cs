@@ -20,6 +20,7 @@ namespace FlociLab.Aws.Lightsail;
 /// blueprint id. Every step
 /// reports what the engine actually answered rather than what the docs promise.
 /// </summary>
+[ServiceFinding("real Lightsail refuses a blueprint id it does not list", "real Lightsail refuses a blueprint id it does not list; floci does not check")]
 public sealed class LightsailDemo(LightsailClientFactory factory) : IServiceDemo
 {
     private const string BlueprintId = "amazon_linux_2023";

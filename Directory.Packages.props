@@ -119,9 +119,14 @@
     <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.1" />
   </ItemGroup>
 
-  <!-- Transitive pins: security fixes for versions a cloud SDK asks for. -->
+  <!-- Transitive pins: security fixes for versions a dependency asks for. -->
   <ItemGroup>
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
+    <!--
+      Aspire still pulls MessagePack 2.5.302. That build is the moderate GHSA-qhrr-8q5h-9q3h
+      (nested arrays allocate before the depth limit). 2.5.303 is the patched 2.x line.
+    -->
+    <PackageVersion Include="MessagePack" Version="2.5.303" />
   </ItemGroup>
 
 </Project>

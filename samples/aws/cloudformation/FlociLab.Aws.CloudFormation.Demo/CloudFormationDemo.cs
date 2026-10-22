@@ -23,6 +23,9 @@ namespace FlociLab.Aws.CloudFormation;
 /// page does not wait for one. Every step reports what the engine actually answered rather than
 /// what the docs promise.
 /// </summary>
+[ServiceFinding("floci accepts the body without reading it: real CloudFormation lists Prefix h...", "floci accepts the body without reading it: real CloudFormation lists Prefix here and refuses a body that is not a template")]
+[ServiceFinding("floci provisions at once: the stack reads CREATE_COMPLETE on the first read,...", "floci provisions at once: the stack reads CREATE_COMPLETE on the first read, real CloudFormation reads CREATE_IN_PROGRESS for minutes")]
+[ServiceFinding("real CloudFormation refuses a second stack of the same name with AlreadyExist...", "real CloudFormation refuses a second stack of the same name with AlreadyExistsException; floci has started to accept it")]
 public sealed class CloudFormationDemo(CloudFormationClientFactory factory) : IServiceDemo
 {
     /// <summary>

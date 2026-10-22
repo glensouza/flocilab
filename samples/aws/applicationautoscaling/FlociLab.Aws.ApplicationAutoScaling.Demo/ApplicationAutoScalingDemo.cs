@@ -20,6 +20,9 @@ namespace FlociLab.Aws.ApplicationAutoScaling;
 /// account as written. Every step reports what the engine actually answered rather than what the
 /// docs promise.
 /// </summary>
+[ServiceFinding("Emulator difference", "floci registers any resource id, real AWS looks it up")]
+[ServiceFinding("real Application Auto Scaling accepts a scheduled action", "real Application Auto Scaling accepts a scheduled action; floci has not built it")]
+[ServiceFinding("real Application Auto Scaling refuses a minimum above the maximum with Valida...", "real Application Auto Scaling refuses a minimum above the maximum with ValidationException; floci does not check")]
 public sealed class ApplicationAutoScalingDemo(ApplicationAutoScalingClientFactory factory) : IServiceDemo
 {
     private const int MinCapacity = 1;

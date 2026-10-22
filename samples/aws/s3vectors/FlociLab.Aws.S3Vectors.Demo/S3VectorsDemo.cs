@@ -20,6 +20,9 @@ namespace FlociLab.Aws.S3Vectors;
 /// gaps where it differs from AWS. Every step reports what the engine actually answered rather than
 /// what the docs promise.
 /// </summary>
+[ServiceFinding("real S3 Vectors rejects a vector whose dimension is not the index's", "real S3 Vectors rejects a vector whose dimension is not the index's; floci has started to accept it")]
+[ServiceFinding("real S3 Vectors answers ConflictException for an index that already exists", "real S3 Vectors answers ConflictException for an index that already exists; floci has started to accept it")]
+[ServiceFinding("real S3 Vectors takes a resource policy on a vector bucket", "real S3 Vectors takes a resource policy on a vector bucket; floci has not built the policy operations")]
 public sealed class S3VectorsDemo(S3VectorsClientFactory factory) : IServiceDemo
 {
     private const string IndexName = "films";

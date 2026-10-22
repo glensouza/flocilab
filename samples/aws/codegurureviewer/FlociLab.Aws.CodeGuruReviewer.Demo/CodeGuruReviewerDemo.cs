@@ -19,6 +19,8 @@ namespace FlociLab.Aws.CodeGuruReviewer;
 /// builds no code reviews, where real CodeGuru Reviewer analyses the code. Every step reports what
 /// the engine actually answered rather than what the docs promise.
 /// </summary>
+[ServiceFinding("real CodeGuru Reviewer answers NotFoundException for an association that does...", "real CodeGuru Reviewer answers NotFoundException for an association that does not exist; floci has started to accept it")]
+[ServiceFinding("real CodeGuru Reviewer lists code reviews", "real CodeGuru Reviewer lists code reviews; floci builds the association half of the service and no reviews")]
 public sealed class CodeGuruReviewerDemo(CodeGuruReviewerClientFactory factory) : IServiceDemo
 {
     public string Provider => CloudProvider.Aws;
