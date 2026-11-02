@@ -99,9 +99,10 @@ public sealed class AwsAppConfigDataTests : IAsyncLifetime
                 Assert.StartsWith("Deleted 1 application(s)", s.Response);
                 Assert.Contains("2 hosted version(s)", s.Response);
 
-                // Tripwire: floci has no DeleteEnvironment. When this starts failing, it does.
-                Assert.Contains("0 environment(s)", s.Response);
-                Assert.Contains("floci cannot delete an environment", s.Response);
+                // floci 2.2.0 had no DeleteEnvironment, so this was 0 environments and a gap note.
+                // floci 2.4.0 serves it: the run deletes the environment itself.
+                Assert.Contains("1 environment(s)", s.Response);
+                Assert.DoesNotContain("floci cannot delete an environment", s.Response);
             });
 
         Assert.All(steps, s => Assert.True(s.Succeeded, $"{s.Title}: {s.Error}"));

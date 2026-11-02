@@ -519,8 +519,9 @@ public sealed class AppConfigDemo(AppConfigClientFactory factory) : IServiceDemo
                             await client.DeleteEnvironmentAsync(new DeleteEnvironmentRequest { ApplicationId = application.Id, EnvironmentId = env.Id }, none).ConfigureAwait(false);
                             environments++;
                         }
-                        // floci has no DeleteEnvironment. Real AppConfig refuses to delete an application
-                        // that still has environments; floci does not, so the run goes on and says so.
+                        // floci 2.2.0 had no DeleteEnvironment (2.4.0 serves it). Real AppConfig refuses to
+                        // delete an application that still has environments; an emulator that cannot delete
+                        // one does not, so the run goes on and says so.
                         catch (AmazonAppConfigException ex) when (factory.UseEmulator && IsNotImplemented(ex))
                         {
                             environmentGap = $"{ex.ErrorCode ?? ex.StatusCode.ToString()}: floci cannot delete an environment, and DeleteApplication leaves it listed under the deleted id";

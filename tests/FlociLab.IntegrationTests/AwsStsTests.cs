@@ -187,18 +187,21 @@ public sealed class AwsStsTests : IAsyncLifetime
     }
 
     /// <summary>
-    /// Tripwire: floci answers GetAccessKeyInfo with UnsupportedOperation. When upstream ships it,
-    /// this fails and the demo can grow a step.
+    /// Regression guard. floci 2.1.0 answered GetAccessKeyInfo with UnsupportedOperation; floci 2.4.0
+    /// dispatches it, and an access key id it has never issued is refused with
+    /// <c>InvalidParameterValue</c> ("does not exist"), as real STS does. A key id shorter than the
+    /// 16 characters the model requires never leaves the SDK.
     /// </summary>
     [Fact]
-    public async Task GetAccessKeyInfo_Is_Not_Supported()
+    public async Task GetAccessKeyInfo_Refuses_An_Unknown_Key()
     {
         using IAmazonSecurityTokenService client = this.factory.Create();
 
         AmazonServiceException ex = await Assert.ThrowsAnyAsync<AmazonServiceException>(
             () => client.GetAccessKeyInfoAsync(new GetAccessKeyInfoRequest { AccessKeyId = "AKIAIOSFODNN7EXAMPLE" }, TestContext.Current.CancellationToken));
 
-        Assert.Equal("UnsupportedOperation", ex.ErrorCode);
+        Assert.Equal("InvalidParameterValue", ex.ErrorCode);
+        Assert.Contains("does not exist", ex.Message, StringComparison.Ordinal);
     }
 
     /// <summary>

@@ -140,21 +140,39 @@ public sealed class AwsRamTests : IAsyncLifetime
     }
 
     /// <summary>
-    /// Tripwire (plan §14). floci 2.1.0 has no <c>GetResourceShareAssociations</c> — the router
-    /// answers <c>UnknownOperationException</c> with a 404, not a 501, so it does not read as
-    /// <c>NotImplemented</c> to <c>Classify</c>. When this fails, upstream routed it: read the
-    /// associations back with it instead of ListPrincipals and ListResources.
+    /// Regression guard (plan §14). floci 2.1.0 had no <c>GetResourceShareAssociations</c>: the router
+    /// answered <c>UnknownOperationException</c> with a 404. floci 2.4.0 serves it, so an association
+    /// made with <c>AssociateResourceShare</c> reads back through it, in the shape real RAM uses.
     /// </summary>
     [Fact]
-    public async Task Floci_Has_No_GetResourceShareAssociations()
+    public async Task Floci_Serves_GetResourceShareAssociations()
     {
+        CancellationToken ct = TestContext.Current.CancellationToken;
         using IAmazonRAM client = this.factory.Create();
 
-        AmazonRAMException ex = await Assert.ThrowsAsync<AmazonRAMException>(
-            () => client.GetResourceShareAssociationsAsync(new GetResourceShareAssociationsRequest { AssociationType = ResourceShareAssociationType.PRINCIPAL }, TestContext.Current.CancellationToken));
+        CreateResourceShareResponse created = await client.CreateResourceShareAsync(
+            new CreateResourceShareRequest { Name = $"flocilab-assoc-{Guid.NewGuid().ToString("N")[..8]}" }, ct);
 
-        Assert.Equal("UnknownOperationException", ex.ErrorCode);
-        Assert.Equal(HttpStatusCode.NotFound, ex.StatusCode);
+        try
+        {
+            await client.AssociateResourceShareAsync(
+                new AssociateResourceShareRequest { ResourceShareArn = created.ResourceShare.ResourceShareArn, Principals = ["123456789012"] }, ct);
+
+            GetResourceShareAssociationsResponse read = await client.GetResourceShareAssociationsAsync(
+                new GetResourceShareAssociationsRequest
+                {
+                    AssociationType = ResourceShareAssociationType.PRINCIPAL,
+                    ResourceShareArns = [created.ResourceShare.ResourceShareArn],
+                }, ct);
+
+            ResourceShareAssociation association = Assert.Single(read.ResourceShareAssociations);
+            Assert.Equal("123456789012", association.AssociatedEntity);
+            Assert.Equal(ResourceShareAssociationStatus.ASSOCIATED, association.Status);
+        }
+        finally
+        {
+            await client.DeleteResourceShareAsync(new DeleteResourceShareRequest { ResourceShareArn = created.ResourceShare.ResourceShareArn }, CancellationToken.None);
+        }
     }
 
     /// <summary>

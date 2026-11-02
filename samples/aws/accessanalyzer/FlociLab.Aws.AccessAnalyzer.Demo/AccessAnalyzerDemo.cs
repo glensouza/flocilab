@@ -251,9 +251,9 @@ public sealed class AccessAnalyzerDemo(AccessAnalyzerClientFactory factory) : IS
 
     /// <summary>
     /// A new analyzer starts <c>CREATING</c> on real AWS and becomes <c>ACTIVE</c> shortly after;
-    /// floci answers <c>ACTIVE</c> at once, so the loop is a single iteration there. There is no
-    /// <c>GetAnalyzer</c> to poll on floci (plan §14), so this lists and picks the run's analyzer
-    /// out by its unique name.
+    /// floci answers <c>ACTIVE</c> at once, so the loop is a single iteration there. floci 2.1.0 had
+    /// no <c>GetAnalyzer</c> (2.4.0 serves it), so this still lists and picks the run's analyzer
+    /// out by its unique name, which works on every version.
     /// </summary>
     private static async Task<AnalyzerSummary> WaitForActiveAsync(IAmazonAccessAnalyzer client, string name, CancellationToken ct)
     {

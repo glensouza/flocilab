@@ -11,11 +11,12 @@ namespace FlociLab.Aws.Account;
 
 /// <summary>
 /// Sets the account's SECURITY alternate contact, reads it back, overwrites it, shows a malformed
-/// request being refused, tries to delete it and puts the account back as it was. Ordinary
+/// request being refused, deletes it and puts the account back as it was. Ordinary
 /// AWSSDK.Account code — the only emulator-aware line in the sample is in
 /// <see cref="AccountClientFactory"/>. The contact belongs to the account, not to the run, so the
-/// run snapshots what was there first and restores it; floci has no <c>DeleteAlternateContact</c>,
-/// so an account that started with none keeps this run's contact there (docs/BLAZOR-PLAN.md §14).
+/// run snapshots what was there first and restores it. floci 2.1.0 had no
+/// <c>DeleteAlternateContact</c>, so an account that started with none kept this run's contact
+/// there; floci 2.4.0 serves it, and the run deletes what it added (docs/BLAZOR-PLAN.md §14).
 /// </summary>
 public sealed class AccountDemo(AccountClientFactory factory) : IServiceDemo
 {
@@ -95,7 +96,6 @@ public sealed class AccountDemo(AccountClientFactory factory) : IServiceDemo
         // page's Dispose cancels mid-flight) still replaced the contact.
         bool putAttempted = false;
         bool removed = false;
-        bool deleteUnsupported = false;
 
         List<DemoStep> cleanup = [];
 
@@ -111,7 +111,7 @@ public sealed class AccountDemo(AccountClientFactory factory) : IServiceDemo
 
                     if (found is null)
                     {
-                        return "ResourceNotFoundException — the account has no SECURITY contact, so at the end this run deletes the one it adds, where the service can.";
+                        return "ResourceNotFoundException — the account has no SECURITY contact, so at the end this run deletes the one it adds.";
                     }
 
                     // A run that died before its finally (a crashed process) leaves its contact
@@ -119,7 +119,7 @@ public sealed class AccountDemo(AccountClientFactory factory) : IServiceDemo
                     // treated as no contact at all.
                     if (found.Name?.StartsWith(NamePrefix, StringComparison.Ordinal) == true)
                     {
-                        return $"{found.Name} <{found.EmailAddress}> — left by an earlier FlociLab run, so it is not put back; this run deletes it with its own, where the service can.";
+                        return $"{found.Name} <{found.EmailAddress}> — left by an earlier FlociLab run, so it is not put back; this run deletes it with its own.";
                     }
 
                     previous = found;
@@ -222,22 +222,10 @@ public sealed class AccountDemo(AccountClientFactory factory) : IServiceDemo
                     this.Wire("/deleteAlternateContact", "client.DeleteAlternateContactAsync(new DeleteAlternateContactRequest { AlternateContactType = SECURITY })"),
                     async () =>
                     {
-                        try
-                        {
-                            DeleteAlternateContactResponse response = await client.DeleteAlternateContactAsync(new DeleteAlternateContactRequest { AlternateContactType = AlternateContactType.SECURITY }, ct).ConfigureAwait(false);
-                            removed = true;
+                        DeleteAlternateContactResponse response = await client.DeleteAlternateContactAsync(new DeleteAlternateContactRequest { AlternateContactType = AlternateContactType.SECURITY }, ct).ConfigureAwait(false);
+                        removed = true;
 
-                            return $"HTTP {(int)response.HttpStatusCode}";
-                        }
-                        // floci answers a 404 UnknownOperationException, not a 501. Reported as a NOTE
-                        // rather than a failure: it is the documented outcome, and the next step puts
-                        // the account back regardless.
-                        catch (AmazonAccountException ex) when (factory.UseEmulator && ex is { StatusCode: HttpStatusCode.NotFound, ErrorCode: "UnknownOperationException" })
-                        {
-                            deleteUnsupported = true;
-
-                            return $"{ex.ErrorCode}: {ex.Message}\nNOTE: floci has no DeleteAlternateContact, so the contact cannot be removed here.";
-                        }
+                        return $"HTTP {(int)response.HttpStatusCode}";
                     }).ConfigureAwait(false);
             }
         }
@@ -248,7 +236,7 @@ public sealed class AccountDemo(AccountClientFactory factory) : IServiceDemo
             // produces is yielded below — an iterator may not yield from inside a finally.
             if (putAttempted && snapshotTaken)
             {
-                cleanup.Add(await this.RestoreAsync(client, previous, removed, deleteUnsupported, ct).ConfigureAwait(false));
+                cleanup.Add(await this.RestoreAsync(client, previous, removed, ct).ConfigureAwait(false));
             }
         }
 
@@ -343,9 +331,9 @@ public sealed class AccountDemo(AccountClientFactory factory) : IServiceDemo
     /// <summary>
     /// Cleanup uses <see cref="CancellationToken.None"/> — a run that was cancelled still has a
     /// contact to put back. A contact that existed before is written back; one that did not is
-    /// deleted, which floci cannot do, so there the run's contact stays and the step says so.
+    /// deleted.
     /// </summary>
-    private async Task<DemoStep> RestoreAsync(IAmazonAccount client, AlternateContact? previous, bool removed, bool deleteUnsupported, CancellationToken ct)
+    private async Task<DemoStep> RestoreAsync(IAmazonAccount client, AlternateContact? previous, bool removed, CancellationToken ct)
     {
         string request = previous is null
             ? this.Wire("/deleteAlternateContact", "client.DeleteAlternateContactAsync(new DeleteAlternateContactRequest { AlternateContactType = SECURITY })")
@@ -375,19 +363,14 @@ public sealed class AccountDemo(AccountClientFactory factory) : IServiceDemo
                 return $"The run's contact was already deleted — nothing to restore.{cancelled}";
             }
 
-            if (deleteUnsupported)
-            {
-                return $"The account had no SECURITY contact of its own before this run and floci cannot delete one, so the run's contact stays. The next run recognises it as a leftover and does not put it back.{cancelled}";
-            }
-
             try
             {
                 await client.DeleteAlternateContactAsync(new DeleteAlternateContactRequest { AlternateContactType = AlternateContactType.SECURITY }, CancellationToken.None).ConfigureAwait(false);
             }
-            // A run cancelled before its own delete step never learned floci has none.
-            catch (AmazonAccountException ex) when (factory.UseEmulator && ex is { StatusCode: HttpStatusCode.NotFound, ErrorCode: "UnknownOperationException" })
+            // A run cancelled while its PutAlternateContact was in flight may never have landed one.
+            catch (ResourceNotFoundException)
             {
-                return $"floci cannot delete a contact, so the run's SECURITY contact stays.{cancelled}";
+                return $"The run's contact never landed — nothing to delete.{cancelled}";
             }
 
             return $"Deleted the run's SECURITY contact.{cancelled}";

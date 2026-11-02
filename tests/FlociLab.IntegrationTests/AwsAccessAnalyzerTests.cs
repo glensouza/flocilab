@@ -116,13 +116,14 @@ public sealed class AwsAccessAnalyzerTests : IAsyncLifetime
     }
 
     /// <summary>
-    /// Tripwire (plan §14). floci 2.1.0 implements CreateAnalyzer, ListAnalyzers and DeleteAnalyzer
-    /// and nothing else: every one of these answers <c>UnknownOperationException</c> (HTTP 404, not
-    /// 501), and the tag operations refuse a well-formed analyzer ARN. When one starts failing,
-    /// upstream shipped it — add a step for it to the sample.
+    /// Tripwire (plan §14). floci 2.1.0 implemented CreateAnalyzer, ListAnalyzers and DeleteAnalyzer
+    /// and nothing else. floci 2.4.0 added GetAnalyzer (asserted below, and still unused by the
+    /// sample). The rest still answers <c>UnknownOperationException</c> (HTTP 404, not 501), and the
+    /// tag operations refuse a well-formed analyzer ARN. When one starts failing, upstream shipped
+    /// it — add a step for it to the sample.
     /// </summary>
     [Fact]
-    public async Task Floci_Implements_Only_Create_List_And_Delete()
+    public async Task Floci_Serves_Analyzer_Lifecycle_But_Not_Rules_Or_Findings()
     {
         CancellationToken ct = TestContext.Current.CancellationToken;
         using IAmazonAccessAnalyzer client = this.factory.Create();
@@ -132,9 +133,10 @@ public sealed class AwsAccessAnalyzerTests : IAsyncLifetime
 
         try
         {
-            AmazonAccessAnalyzerException get = await Assert.ThrowsAsync<AmazonAccessAnalyzerException>(
-                () => client.GetAnalyzerAsync(new GetAnalyzerRequest { AnalyzerName = name }, ct));
-            Assert.Contains("UnknownOperation", get.ErrorCode ?? get.Message, StringComparison.Ordinal);
+            // floci 2.4.0 serves GetAnalyzer (2.1.0 answered UnknownOperationException).
+            GetAnalyzerResponse get = await client.GetAnalyzerAsync(new GetAnalyzerRequest { AnalyzerName = name }, ct);
+            Assert.Equal(created.Arn, get.Analyzer.Arn);
+            Assert.Equal(AnalyzerStatus.ACTIVE, get.Analyzer.Status);
 
             AmazonAccessAnalyzerException rules = await Assert.ThrowsAsync<AmazonAccessAnalyzerException>(
                 () => client.ListArchiveRulesAsync(new ListArchiveRulesRequest { AnalyzerName = name }, ct));

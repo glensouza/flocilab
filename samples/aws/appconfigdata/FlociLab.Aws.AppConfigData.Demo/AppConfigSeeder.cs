@@ -78,8 +78,8 @@ internal sealed class AppConfigSeeder(IAmazonAppConfig client) : IDisposable
 
     /// <summary>
     /// Deletes an application inside out — hosted versions, profiles, environments, the
-    /// application — and says what it removed. floci has no DeleteEnvironment (the AppConfig
-    /// sample pins that), so an environment that cannot be deleted is counted, not thrown.
+    /// application — and says what it removed. floci 2.2.0 had no DeleteEnvironment (2.4.0 serves
+    /// it), so an environment an emulator cannot delete is counted, not thrown.
     /// </summary>
     public async Task<(int Versions, int Profiles, int Environments, int EnvironmentsKept)> DeleteAsync(string applicationId, CancellationToken ct)
     {
