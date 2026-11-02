@@ -120,7 +120,7 @@ public sealed class QueueDemo(QueueClientFactory factory) : IServiceDemo
                 $"GET {origin}/20210201/queues?compartmentId={factory.CompartmentId}\nqueueAdmin.ListQueues(new ListQueuesRequest {{ CompartmentId }})",
                 async () =>
                 {
-                    // OCI.DotNetSDK.Queue 145.0.0 (not re-measured on 148.1.0) does not reliably
+                    // OCI.DotNetSDK.Queue 145.0.0 (not re-measured on 148.1.0 or on 150.0.0) does not reliably
                     // check an already-cancelled token before it starts a request — measured
                     // against floci-oci: the same
                     // pre-cancelled token let anywhere from zero to all six steps of this run

@@ -93,7 +93,7 @@ public static class FlociAzureExtensions
     /// InvalidOperationException("Bearer token authentication is not permitted for non TLS
     /// protected (https) endpoints.")</c>. There is no constructor flag, settable property, or
     /// AppContext switch to disable this — confirmed by decompiling Azure.Core 1.55.0 and
-    /// Azure.Security.KeyVault.Secrets 4.11.0 (re-checked on 1.62.0 and 4.11.2), whose only
+    /// Azure.Security.KeyVault.Secrets 4.11.0 (re-checked on 1.62.0 and 4.11.2, and again on 1.64.0 and 4.12.0, 2026-11-02), whose only
     /// "insecure" string is a log message for a blocked HTTPS-to-HTTP redirect
     /// (docs/BLAZOR-PLAN.md §14) — and floci-az has no TLS port to point the client at instead.
     ///

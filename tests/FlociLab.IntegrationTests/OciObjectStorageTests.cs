@@ -222,7 +222,7 @@ public sealed class OciObjectStorageTests : IAsyncLifetime
     /// the client resolves every operation's URI from a realm-specific endpoint template built
     /// from the credential's region, so a client configured for the emulator sends its requests to
     /// real Oracle Cloud while <c>GetEndpoint()</c> keeps reporting the emulator. Verified on
-    /// OCI.DotNetSDK 145.0.0, and still on 148.1.0 (2026-10-08).
+    /// OCI.DotNetSDK 145.0.0, and still on 148.1.0 (2026-10-08) and 150.0.0 (2026-11-02, by this test).
     ///
     /// <para>
     /// The half-configured client below is what a sample following plan §7's original advice would
