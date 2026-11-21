@@ -49,7 +49,9 @@ public sealed class AwsAppConfigDataTests : IAsyncLifetime
             {
                 Assert.Equal("Seeding with AWSSDK.AppConfig — an application, a profile and version 1 deployed", s.Title);
                 Assert.StartsWith("flocilab-", s.Response);
-                Assert.Contains("version 1 published and deployed: COMPLETE", s.Response);
+                // floci 2.5.0 bakes a deployment for its strategy's bake time (ten minutes for
+                // AllAtOnce), as real AppConfig does; 2.4.0 reported COMPLETE at once.
+                Assert.Contains("version 1 published and deployed: BAKING", s.Response);
             },
             s =>
             {

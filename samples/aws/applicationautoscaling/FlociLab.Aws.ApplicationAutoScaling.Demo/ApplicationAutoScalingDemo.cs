@@ -188,13 +188,20 @@ public sealed class ApplicationAutoScalingDemo(ApplicationAutoScalingClientFacto
                                     ScalableTargetAction = new ScalableTargetAction { MinCapacity = ScheduledMinCapacity, MaxCapacity = ScheduledMaxCapacity },
                                 }, ct).ConfigureAwait(false);
 
-                            return "accepted\nfloci now implements scheduled actions: delete this step's tripwire and add the action to the resource tree";
+                            return factory.UseEmulator
+                                ? "accepted\nfloci now schedules DynamoDB actions: delete this step's tripwire and add the action to the resource tree"
+                                : "accepted";
                         }
-                        // Not a 501: floci answers an operation it recognises but has not built with
-                        // HTTP 400 and this code. Real Application Auto Scaling accepts the call.
-                        catch (AmazonApplicationAutoScalingException ex) when (ex.ErrorCode == "UnsupportedOperation")
+                        // floci 2.5.0 builds scheduled actions for an ECS service's desired count only,
+                        // with a one-off at(...) schedule, and refuses a DynamoDB target with this
+                        // ValidationException. Real Application Auto Scaling accepts a cron schedule
+                        // on a DynamoDB table. Matched on the message, so a real refusal still fails.
+                        catch (AmazonApplicationAutoScalingException ex) when (factory.UseEmulator && ex.ErrorCode == "ValidationException" && ex.Message.Contains("ECS desired count only", StringComparison.Ordinal))
                         {
-                            return $"{ex.ErrorCode}: {ex.Message}\nreal Application Auto Scaling accepts a scheduled action; floci has not built it";
+                            // Refused, so nothing was created and cleanup has nothing to look for.
+                            claimed.Schedule = false;
+
+                            return $"{ex.ErrorCode}: {ex.Message}\nreal Application Auto Scaling accepts a cron schedule on a DynamoDB table; floci builds scheduled actions for an ECS service's desired count only";
                         }
                     }).ConfigureAwait(false);
             }
@@ -448,9 +455,9 @@ public sealed class ApplicationAutoScalingDemo(ApplicationAutoScalingClientFacto
                 }
             }
 
-            // Before the target it belongs to. floci answers every scheduled-action call with
-            // UnsupportedOperation, which means there is nothing to remove; once it builds them,
-            // this deletes the run's action instead of leaving it behind.
+            // Before the target it belongs to. floci refuses a DynamoDB scheduled action (2.5.0
+            // builds ECS ones only), and the step then unclaims it; once floci builds them, this
+            // deletes the run's action instead of leaving it behind.
             if (claimed.Schedule)
             {
                 try

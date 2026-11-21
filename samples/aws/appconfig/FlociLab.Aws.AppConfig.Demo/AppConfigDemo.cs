@@ -16,8 +16,8 @@ namespace FlociLab.Aws.AppConfig;
 /// Creates an application, an environment and a hosted configuration profile, publishes two
 /// versions of a JSON configuration, reads one back, lists the deployment strategies AppConfig
 /// ships with, tries to deploy a version that was never created, deploys the first version, tags
-/// the application, then tries what floci has not built: updating the application and deleting the
-/// environment. Ordinary AWSSDK.AppConfig code — the only emulator wiring is in
+/// the application, then updates it — which floci builds since 2.5.0 — and tries the environment
+/// update floci has not built. Ordinary AWSSDK.AppConfig code — the only emulator wiring is in
 /// <see cref="AppConfigClientFactory"/>; this class reads <c>UseEmulator</c> only to name floci's
 /// gaps where it differs from AWS and to stop a deployment AWS is still baking. Every step reports
 /// what the engine actually answered rather than what the docs promise.
@@ -198,7 +198,10 @@ public sealed class AppConfigDemo(AppConfigClientFactory factory) : IServiceDemo
 
                     // Before the real deployment, not after it: real AppConfig allows one active deployment
                     // per environment, and AllAtOnce bakes for ten minutes, so a later attempt would be
-                    // refused for that rather than for the missing version.
+                    // refused for that rather than for the missing version. floci bakes too since 2.5.0,
+                    // so this one is deployment 1 and is still baking when the next step starts
+                    // deployment 2; the day floci enforces one active deployment, that next step fails
+                    // with a conflict rather than its note changing.
                     if (environment.Succeeded)
                     {
                         yield return await RunStepAsync(
@@ -218,7 +221,7 @@ public sealed class AppConfigDemo(AppConfigClientFactory factory) : IServiceDemo
                                             DeploymentStrategyId = StrategyId,
                                         }, ct).ConfigureAwait(false);
 
-                                    return $"deployment {response.DeploymentNumber}: version {response.ConfigurationVersion}, {response.State?.Value}\nreal AppConfig refuses a version the profile does not have; floci deploys it and reports it complete";
+                                    return $"deployment {response.DeploymentNumber}: version {response.ConfigurationVersion}, {response.State?.Value}\nreal AppConfig refuses a version the profile does not have; floci deploys it";
                                 }
                                 // What real AppConfig answers: the expected outcome, shown as a successful step.
                                 catch (AmazonAppConfigException ex) when (ex.StatusCode != 0)
@@ -250,9 +253,19 @@ public sealed class AppConfigDemo(AppConfigClientFactory factory) : IServiceDemo
 
                                 string line = $"deployment {found.DeploymentNumber}: version {found.ConfigurationVersion}, {found.State?.Value}";
 
-                                return factory.UseEmulator
-                                    ? $"{line}\nfloci completes the deployment at once, with no rollout and no bake time; real AppConfig reads Deploying and then Baking for the strategy's bake time"
-                                    : line;
+                                if (!factory.UseEmulator || found.DeploymentNumber.GetValueOrDefault() < 2)
+                                {
+                                    return line;
+                                }
+
+                                // What the earlier deployment reads now, not what it read when it started:
+                                // the note below is only true while it is still active.
+                                GetDeploymentResponse first = await client.GetDeploymentAsync(
+                                    new GetDeploymentRequest { ApplicationId = applicationId, EnvironmentId = environmentId, DeploymentNumber = 1 }, ct).ConfigureAwait(false);
+
+                                return first.State == DeploymentState.BAKING || first.State == DeploymentState.DEPLOYING
+                                    ? $"{line}\nfloci started it while deployment 1 is still {first.State.Value.ToLowerInvariant()}; real AppConfig allows one active deployment per environment"
+                                    : $"{line}\ndeployment 1 reads {first.State?.Value}";
                             }).ConfigureAwait(false);
                     }
                 }
@@ -303,21 +316,29 @@ public sealed class AppConfigDemo(AppConfigClientFactory factory) : IServiceDemo
 
                 yield return await RunStepAsync(
                     "UpdateApplication — changing its description",
-                    this.Call("PATCH", $"/applications/{applicationId}", "client.UpdateApplicationAsync(new UpdateApplicationRequest { ApplicationId = id, Description = \"renamed\" })"),
+                    this.Call("PATCH", $"/applications/{applicationId}", "client.UpdateApplicationAsync(new UpdateApplicationRequest { ApplicationId = id, Description = \"renamed\" })\nclient.UpdateEnvironmentAsync(new UpdateEnvironmentRequest { ApplicationId = id, EnvironmentId = env, Description = \"renamed\" })"),
                     async () =>
                     {
+                        UpdateApplicationResponse updated = await client.UpdateApplicationAsync(new UpdateApplicationRequest { ApplicationId = applicationId, Description = "renamed" }, ct).ConfigureAwait(false);
+                        string line = $"description now '{updated.Description}'";
+
+                        if (!factory.UseEmulator || environmentId is null)
+                        {
+                            return line;
+                        }
+
+                        // floci 2.5.0 built UpdateApplication and nothing else of the update half, so
+                        // the environment update stays the tripwire for the rest of it.
                         try
                         {
-                            await client.UpdateApplicationAsync(new UpdateApplicationRequest { ApplicationId = applicationId, Description = "renamed" }, ct).ConfigureAwait(false);
+                            await client.UpdateEnvironmentAsync(new UpdateEnvironmentRequest { ApplicationId = applicationId, EnvironmentId = environmentId, Description = "renamed" }, ct).ConfigureAwait(false);
 
-                            return factory.UseEmulator
-                                ? "updated\nfloci now implements the update operations: delete this step's tripwire and add UpdateEnvironment, UpdateConfigurationProfile and UpdateDeploymentStrategy"
-                                : "updated";
+                            return $"{line}\nUpdateEnvironment: updated\nfloci now implements UpdateEnvironment: delete this tripwire and check UpdateConfigurationProfile and UpdateDeploymentStrategy";
                         }
-                        // Not a 501: floci answers an update with HTTP 405 and no body. Real AppConfig updates it.
+                        // Not a 501: floci answers an update it has not built with HTTP 405 and no body.
                         catch (AmazonAppConfigException ex) when (IsNotImplemented(ex))
                         {
-                            return $"HTTP {(int)ex.StatusCode} {ex.StatusCode}: {ex.Message}\nreal AppConfig updates an application, an environment, a profile and a strategy in place; floci builds the create, get, list and delete half";
+                            return $"{line}\nUpdateEnvironment: HTTP {(int)ex.StatusCode} {ex.StatusCode}\nfloci built UpdateApplication in 2.5.0; real AppConfig also updates an environment, a profile and a strategy in place, which floci still answers with 405";
                         }
                     }).ConfigureAwait(false);
             }
@@ -417,7 +438,8 @@ public sealed class AppConfigDemo(AppConfigClientFactory factory) : IServiceDemo
     /// <summary>
     /// Real AWS only: a deployment that is still rolling out or baking blocks the environment's
     /// delete. Stops it, which rolls it back, and waits up to two minutes for that to settle. floci
-    /// completes a deployment at once, so it is never called there.
+    /// bakes a deployment too since 2.5.0, but deletes the environment mid-bake, so it is never
+    /// called there.
     /// </summary>
     private static async Task StopDeploymentsAsync(IAmazonAppConfig client, string applicationId, string environmentId, CancellationToken ct)
     {

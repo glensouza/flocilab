@@ -10,9 +10,8 @@
 <p class="lede">
     Create a vector bucket and a three-dimensional cosine index, put four vectors with metadata,
     read them back, list them, run a nearest-neighbour query, narrow it with a metadata filter, and
-    delete one. It then tries a vector of the wrong dimension, a duplicate index and a bucket policy,
-    which floci has not built, and
-    deletes everything. Each step shows what the target actually answered. This is
+    delete one. It then tries a vector of the wrong dimension and a duplicate index, puts, reads and
+    deletes a bucket policy, and deletes everything. Each step shows what the target actually answered. This is
     <code>AWSSDK.S3Vectors</code> used exactly as production would use it.
 </p>
 

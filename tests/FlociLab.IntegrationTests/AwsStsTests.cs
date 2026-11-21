@@ -188,9 +188,10 @@ public sealed class AwsStsTests : IAsyncLifetime
 
     /// <summary>
     /// Regression guard. floci 2.1.0 answered GetAccessKeyInfo with UnsupportedOperation; floci 2.4.0
-    /// dispatches it, and an access key id it has never issued is refused with
-    /// <c>InvalidParameterValue</c> ("does not exist"), as real STS does. A key id shorter than the
-    /// 16 characters the model requires never leaves the SDK.
+    /// dispatches it, and an access key id it has never issued is refused. 2.4.0 refused it with
+    /// <c>InvalidParameterValue</c> ("does not exist"); 2.5.0 answers <c>ValidationError</c>
+    /// ("Access key ID is not valid."), re-probed 2026-11-20. A key id shorter than the 16
+    /// characters the model requires never leaves the SDK.
     /// </summary>
     [Fact]
     public async Task GetAccessKeyInfo_Refuses_An_Unknown_Key()
@@ -200,8 +201,8 @@ public sealed class AwsStsTests : IAsyncLifetime
         AmazonServiceException ex = await Assert.ThrowsAnyAsync<AmazonServiceException>(
             () => client.GetAccessKeyInfoAsync(new GetAccessKeyInfoRequest { AccessKeyId = "AKIAIOSFODNN7EXAMPLE" }, TestContext.Current.CancellationToken));
 
-        Assert.Equal("InvalidParameterValue", ex.ErrorCode);
-        Assert.Contains("does not exist", ex.Message, StringComparison.Ordinal);
+        Assert.Equal("ValidationError", ex.ErrorCode);
+        Assert.Contains("Access key ID is not valid", ex.Message, StringComparison.Ordinal);
     }
 
     /// <summary>

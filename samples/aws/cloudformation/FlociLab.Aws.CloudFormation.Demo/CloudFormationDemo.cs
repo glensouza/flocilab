@@ -18,9 +18,9 @@ namespace FlociLab.Aws.CloudFormation;
 /// a second stack under a name that is taken, a stack with a resource type that does not exist and
 /// a drift check, and deletes everything. Ordinary AWSSDK.CloudFormation code — the only emulator-aware line
 /// is in <see cref="CloudFormationClientFactory"/>. floci provisions the template's resources
-/// itself, synchronously: a stack reads CREATE_COMPLETE before the create call has returned its
-/// answer to the next one, where real CloudFormation spends minutes in CREATE_IN_PROGRESS, so the
-/// page does not wait for one. Every step reports what the engine actually answered rather than
+/// itself. Since 2.5.0 CreateStack answers before provisioning finishes, as real CloudFormation
+/// does, but floci settles in moments where AWS spends minutes in CREATE_IN_PROGRESS, so the page
+/// waits up to 10 seconds against floci and 20 minutes against AWS. Every step reports what the engine actually answered rather than
 /// what the docs promise.
 /// </summary>
 public sealed class CloudFormationDemo(CloudFormationClientFactory factory) : IServiceDemo
@@ -138,8 +138,15 @@ public sealed class CloudFormationDemo(CloudFormationClientFactory factory) : IS
                             Parameters = [new Parameter { ParameterKey = "Prefix", ParameterValue = names.Prefix }],
                         }, ct).ConfigureAwait(false);
 
-                    Stack stack = await this.WaitForStackAsync(client, names.Stack, ct).ConfigureAwait(false)
+                    // The first read is kept so the page says what floci answered then, not only once it settled:
+                    // since 2.5.0 it may read CREATE_IN_PROGRESS for a moment, or already CREATE_COMPLETE.
+                    long waited = Stopwatch.GetTimestamp();
+                    Stack? firstRead = await DescribeStackAsync(client, names.Stack, ct).ConfigureAwait(false);
+                    Stack stack = (firstRead is not null && firstRead.StackStatus?.Value.EndsWith("_IN_PROGRESS", StringComparison.Ordinal) != true
+                            ? firstRead
+                            : await this.WaitForStackAsync(client, names.Stack, ct).ConfigureAwait(false))
                         ?? throw new InvalidOperationException("CreateStack was accepted but DescribeStacks does not list the stack.");
+                    TimeSpan settledWithin = Stopwatch.GetElapsedTime(waited);
 
                     if (stack.StackStatus != StackStatus.CREATE_COMPLETE)
                     {
@@ -147,7 +154,7 @@ public sealed class CloudFormationDemo(CloudFormationClientFactory factory) : IS
                     }
 
                     string note = factory.UseEmulator
-                        ? "\nfloci provisions at once: the stack reads CREATE_COMPLETE on the first read, real CloudFormation reads CREATE_IN_PROGRESS for minutes"
+                        ? $"\nfirst DescribeStacks read {firstRead?.StackStatus?.Value ?? "nothing"}; CREATE_COMPLETE within {settledWithin.TotalMilliseconds:F0} ms of CreateStack answering. Real CloudFormation reads CREATE_IN_PROGRESS for minutes"
                         : string.Empty;
 
                     return $"{DescribeStack(stack)}\n{response.StackId}\n{string.Join("\n", (stack.Outputs ?? []).Select(o => $"output {o.OutputKey} = {o.OutputValue}"))}{note}";
@@ -446,14 +453,17 @@ public sealed class CloudFormationDemo(CloudFormationClientFactory factory) : IS
             ct).ConfigureAwait(false);
 
     /// <summary>
-    /// Reads until <paramref name="settled"/> holds. Against floci it reads once, so a stack that reads
-    /// complete at once stays a tripwire rather than something this waits out; real CloudFormation
-    /// spends minutes creating or deleting, so there it polls for up to twenty minutes and returns
-    /// whatever it last read.
+    /// Reads until <paramref name="settled"/> holds, and returns whatever it last read when the limit
+    /// runs out. floci through 2.4.0 provisioned synchronously, so this read once there; 2.5.0
+    /// answers CreateStack before provisioning finishes and settles in moments, so it polls every
+    /// 100 ms for up to 10 seconds, a bound that also keeps the uncancellable cleanup short. Real
+    /// CloudFormation spends minutes creating or deleting, so there it polls every five seconds for
+    /// up to twenty minutes.
     /// </summary>
     private async Task<T> WaitAsync<T>(Func<Task<T>> read, Func<T, bool> settled, CancellationToken ct)
     {
-        TimeSpan limit = factory.UseEmulator ? TimeSpan.Zero : TimeSpan.FromMinutes(20);
+        TimeSpan limit = factory.UseEmulator ? TimeSpan.FromSeconds(10) : TimeSpan.FromMinutes(20);
+        TimeSpan interval = factory.UseEmulator ? TimeSpan.FromMilliseconds(100) : TimeSpan.FromSeconds(5);
         long started = Stopwatch.GetTimestamp();
 
         while (true)
@@ -465,7 +475,7 @@ public sealed class CloudFormationDemo(CloudFormationClientFactory factory) : IS
                 return value;
             }
 
-            await Task.Delay(TimeSpan.FromSeconds(5), ct).ConfigureAwait(false);
+            await Task.Delay(interval, ct).ConfigureAwait(false);
         }
     }
 

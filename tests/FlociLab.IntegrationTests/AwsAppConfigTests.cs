@@ -77,17 +77,21 @@ public sealed class AwsAppConfigTests : IAsyncLifetime
             {
                 Assert.Equal("StartDeployment — a version that was never created", s.Title);
 
-                // Tripwire: floci deploys a version the profile does not have and reports it
-                // complete. Real AppConfig refuses. When this starts failing, floci validates it.
-                Assert.StartsWith("deployment 1: version 9, COMPLETE", s.Response);
+                // Tripwire: floci deploys a version the profile does not have (BAKING since 2.5.0,
+                // COMPLETE before). Real AppConfig refuses. When this starts failing, floci validates it.
+                Assert.StartsWith("deployment 1: version 9, BAKING", s.Response);
             },
             s =>
             {
                 Assert.Equal("StartDeployment, GetDeployment — version 1 into the environment", s.Title);
 
-                // Tripwire: floci completes the deployment at once; real AppConfig reads Deploying
-                // and then Baking. When this fails, floci models the rollout.
-                Assert.StartsWith("deployment 2: version 1, COMPLETE", s.Response);
+                // Regression guard for floci 2.5.0's bake time: the deployment reads BAKING, as real
+                // AppConfig does (2.4.0 read COMPLETE at once), and deployment 1 still reads BAKING
+                // when it is read back. Tripwire: floci starts deployment 2 regardless; real AppConfig
+                // allows one active deployment per environment, so when floci enforces that this
+                // step fails with a conflict.
+                Assert.StartsWith("deployment 2: version 1, BAKING", s.Response);
+                Assert.Contains("while deployment 1 is still baking", s.Response);
             },
             s =>
             {
@@ -105,9 +109,11 @@ public sealed class AwsAppConfigTests : IAsyncLifetime
             {
                 Assert.Equal("UpdateApplication — changing its description", s.Title);
 
-                // Tripwire: floci answers an update with HTTP 405 (not 501). When this starts
-                // failing, the update operations landed.
-                Assert.StartsWith("HTTP 405 MethodNotAllowed", s.Response);
+                // Regression guard: floci 2.5.0 builds UpdateApplication (2.4.0 answered HTTP 405).
+                // Tripwire: UpdateEnvironment still answers HTTP 405 (not 501). When that starts
+                // failing, the remaining update operations landed.
+                Assert.StartsWith("description now 'renamed'", s.Response);
+                Assert.Contains("UpdateEnvironment: HTTP 405 MethodNotAllowed", s.Response);
             },
             s =>
             {

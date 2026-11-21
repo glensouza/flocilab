@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
+using System.Text.Json.Nodes;
 using Amazon.Runtime;
 using Amazon.Runtime.Documents;
 using Amazon.S3Vectors;
@@ -14,8 +15,8 @@ namespace FlociLab.Aws.S3Vectors;
 /// <summary>
 /// Creates a vector bucket and a three-dimensional cosine index, puts four vectors with a genre in
 /// their metadata, reads them back and lists them, asks for the two nearest to a query vector, asks
-/// again with a metadata filter, deletes one, then tries a vector of the wrong dimension, a
-/// duplicate index and a bucket policy. Ordinary AWSSDK.S3Vectors code — the only emulator wiring is
+/// again with a metadata filter, deletes one, then tries a vector of the wrong dimension and a
+/// duplicate index, and puts, reads and deletes a bucket policy. Ordinary AWSSDK.S3Vectors code — the only emulator wiring is
 /// in <see cref="S3VectorsClientFactory"/>; this class reads <c>UseEmulator</c> only to name floci's
 /// gaps where it differs from AWS. Every step reports what the engine actually answered rather than
 /// what the docs promise.
@@ -259,8 +260,8 @@ public sealed class S3VectorsDemo(S3VectorsClientFactory factory) : IServiceDemo
                 }
 
                 yield return await RunStepAsync(
-                    "PutVectorBucketPolicy — a bucket policy",
-                    this.Call("PutVectorBucketPolicy", "client.PutVectorBucketPolicyAsync(new PutVectorBucketPolicyRequest { VectorBucketName = bucket, Policy = json })"),
+                    "PutVectorBucketPolicy, GetVectorBucketPolicy, DeleteVectorBucketPolicy — a bucket policy",
+                    this.Call("PutVectorBucketPolicy", "client.PutVectorBucketPolicyAsync(new PutVectorBucketPolicyRequest { VectorBucketName = bucket, Policy = json })\nclient.GetVectorBucketPolicyAsync(new GetVectorBucketPolicyRequest { VectorBucketName = bucket })\nclient.DeleteVectorBucketPolicyAsync(new DeleteVectorBucketPolicyRequest { VectorBucketName = bucket })"),
                     async () =>
                     {
                         // Without the bucket's ARN there is no account to name, and a guessed principal could
@@ -274,19 +275,22 @@ public sealed class S3VectorsDemo(S3VectorsClientFactory factory) : IServiceDemo
                         // it can already do.
                         string policy = "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"" + root + "\"},\"Action\":\"s3vectors:GetVectorBucket\",\"Resource\":\"" + bucketArn + "\"}]}";
 
-                        try
-                        {
-                            await client.PutVectorBucketPolicyAsync(new PutVectorBucketPolicyRequest { VectorBucketName = name, Policy = policy }, ct).ConfigureAwait(false);
+                        await client.PutVectorBucketPolicyAsync(new PutVectorBucketPolicyRequest { VectorBucketName = name, Policy = policy }, ct).ConfigureAwait(false);
 
-                            return factory.UseEmulator
-                                ? "stored\nfloci now implements bucket policies: delete this step's tripwire and add Get and DeleteVectorBucketPolicy"
-                                : "stored";
-                        }
-                        // Not a 501: floci answers an operation it has not built with HTTP 404 and UnknownOperationException.
-                        catch (AmazonS3VectorsException ex) when (factory.UseEmulator && IsNotImplemented(ex))
+                        GetVectorBucketPolicyResponse stored = await client.GetVectorBucketPolicyAsync(new GetVectorBucketPolicyRequest { VectorBucketName = name }, ct).ConfigureAwait(false);
+
+                        // Compared as JSON, not as text: a service may store a policy in its own
+                        // whitespace or key order and still hold exactly what was sent.
+                        if (stored.Policy is null || !JsonNode.DeepEquals(JsonNode.Parse(stored.Policy), JsonNode.Parse(policy)))
                         {
-                            return $"HTTP {(int)ex.StatusCode} {ex.ErrorCode}: {ex.Message}\nreal S3 Vectors takes a resource policy on a vector bucket; floci has not built the policy operations";
+                            throw new InvalidOperationException($"GetVectorBucketPolicy read back a different policy: {stored.Policy ?? "none"}");
                         }
+
+                        await client.DeleteVectorBucketPolicyAsync(new DeleteVectorBucketPolicyRequest { VectorBucketName = name }, ct).ConfigureAwait(false);
+
+                        string gone = await this.PolicyGoneAsync(client, name, ct).ConfigureAwait(false);
+
+                        return $"stored, read back unchanged, deleted\nGetVectorBucketPolicy after the delete: {gone}";
                     }).ConfigureAwait(false);
             }
         }
@@ -336,8 +340,35 @@ public sealed class S3VectorsDemo(S3VectorsClientFactory factory) : IServiceDemo
         return ProbeResult.Error(Describe(ex), elapsed);
     }
 
-    private static bool IsNotImplemented(AmazonServiceException ex)
-        => ex.StatusCode == HttpStatusCode.NotImplemented || ex.ErrorCode == "UnknownOperationException";
+    /// <summary>
+    /// Reads the policy back after its delete until the read is refused with
+    /// <see cref="NotFoundException"/>, and returns that error code. floci answers it at once;
+    /// against real AWS a read straight after the delete may still see the policy, so it retries
+    /// for up to ten seconds there before calling the delete ineffective.
+    /// </summary>
+    private async Task<string> PolicyGoneAsync(IAmazonS3Vectors client, string name, CancellationToken ct)
+    {
+        DateTime deadline = DateTime.UtcNow.AddSeconds(factory.UseEmulator ? 0 : 10);
+
+        while (true)
+        {
+            try
+            {
+                GetVectorBucketPolicyResponse after = await client.GetVectorBucketPolicyAsync(new GetVectorBucketPolicyRequest { VectorBucketName = name }, ct).ConfigureAwait(false);
+
+                if (DateTime.UtcNow >= deadline)
+                {
+                    throw new InvalidOperationException($"DeleteVectorBucketPolicy answered, but the policy still reads back: {after.Policy ?? "an empty policy"}");
+                }
+            }
+            catch (NotFoundException ex)
+            {
+                return ex.ErrorCode;
+            }
+
+            await Task.Delay(TimeSpan.FromSeconds(1), ct).ConfigureAwait(false);
+        }
+    }
 
     /// <summary>The account root inside <c>arn:aws:s3vectors:region:account:bucket/name</c>, as an IAM principal; null when there is no account in it.</summary>
     private static string? AccountRoot(string arn)

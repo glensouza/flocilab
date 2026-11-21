@@ -96,11 +96,11 @@ public sealed class AwsS3VectorsTests : IAsyncLifetime
             },
             s =>
             {
-                Assert.Equal("PutVectorBucketPolicy — a bucket policy", s.Title);
+                Assert.Equal("PutVectorBucketPolicy, GetVectorBucketPolicy, DeleteVectorBucketPolicy — a bucket policy", s.Title);
 
-                // Tripwire: floci answers HTTP 404 UnknownOperationException. When this starts
-                // failing, bucket policies landed.
-                Assert.StartsWith("HTTP 404 UnknownOperationException", s.Response);
+                // Regression guard: floci 2.5.0 builds the bucket policy operations (2.4.0 answered
+                // HTTP 404 UnknownOperationException), and a read after the delete is refused.
+                Assert.Equal("stored, read back unchanged, deleted\nGetVectorBucketPolicy after the delete: NotFoundException", s.Response);
             },
             s =>
             {

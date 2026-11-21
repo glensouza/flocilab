@@ -66,9 +66,11 @@ public sealed class AwsApplicationAutoScalingTests : IAsyncLifetime
             {
                 Assert.Equal("PutScheduledAction — a nightly shrink", s.Title);
 
-                // Tripwire: floci answers UnsupportedOperation (HTTP 400, not 501). When this starts
-                // failing, scheduled actions landed.
-                Assert.StartsWith("UnsupportedOperation", s.Response);
+                // Tripwire: floci 2.5.0 builds scheduled actions for ECS desired count only and
+                // refuses a DynamoDB table with ValidationException (2.4.0 answered every
+                // scheduled-action call with UnsupportedOperation). When this starts failing,
+                // DynamoDB scheduled actions landed.
+                Assert.StartsWith("ValidationException: Scheduled actions support ECS desired count only.", s.Response);
             },
             s =>
             {

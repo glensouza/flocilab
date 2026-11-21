@@ -57,9 +57,13 @@ public sealed class AwsCloudFormationTests : IAsyncLifetime
             {
                 Assert.Equal("CreateStack, DescribeStacks — a queue and a bucket from one template", s.Title);
 
-                // Tripwire: floci provisions synchronously; real CloudFormation reads CREATE_IN_PROGRESS first.
+                // floci 2.5.0 answers CreateStack before provisioning finishes, as real CloudFormation
+                // does (2.4.0 provisioned synchronously), and settles well inside the page's 10 s wait.
+                // The first read is reported as it was: usually CREATE_COMPLETE already, sometimes
+                // CREATE_IN_PROGRESS under load, so it is not pinned either way.
                 Assert.StartsWith("flocilab-", s.Response);
                 Assert.Contains(": CREATE_COMPLETE", s.Response);
+                Assert.Contains("ms of CreateStack answering", s.Response);
                 Assert.Contains("output QueueUrl = ", s.Response);
             },
             s =>
