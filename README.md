@@ -37,7 +37,7 @@ starts in roughly 24 ms and idles at about 13 MiB. Service counts below are from
 
 | Emulator | Cloud | Port | Coverage |
 | :--- | :--- | :--- | :--- |
-| [`floci`](https://github.com/floci-io/floci) | AWS | `4566` | 127 services — S3, SQS, DynamoDB, Lambda, EventBridge, Step Functions, RDS, EKS, Bedrock and more |
+| [`floci`](https://github.com/floci-io/floci) | AWS | `4566` | 135 services — S3, SQS, DynamoDB, Lambda, EventBridge, Step Functions, RDS, EKS, Bedrock and more |
 | [`floci-az`](https://github.com/floci-io/floci-az) | Azure | `4577` | 33 services — Blob, Queue, Table, Cosmos DB, Key Vault, Service Bus, Event Hubs, Functions, ARM plane |
 | [`floci-gcp`](https://github.com/floci-io/floci-gcp) | GCP | `4588` | 28 services — GCS, Pub/Sub, Firestore, Secret Manager, Cloud KMS, BigQuery, Cloud Run, GKE |
 | [`floci-oci`](https://github.com/floci-io/floci-oci) | Oracle Cloud | `4599` | 11 services — Object Storage, Identity, Queue, Streaming, KMS, Vault Secrets, Functions, OKE, PostgreSQL, Organizations, Governance Rules |

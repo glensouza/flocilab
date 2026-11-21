@@ -32,8 +32,8 @@ still land here. What each emulator actually answers today is on any host's `/co
 
 ### Goals
 
-1. **A working demo of every service Floci emulates** — 199 of them, eventually. floci.io lists
-   127 AWS, 33 Azure, 28 GCP and 11 OCI services (2026-11-20); the backlog splits a few of those cards where
+1. **A working demo of every service Floci emulates** — 207 of them, eventually. floci.io lists
+   135 AWS, 33 Azure, 28 GCP and 11 OCI services (2026-11-20); the backlog splits a few of those cards where
    the .NET SDK ships them as separate packages.
 2. **Each service sample is independently consumable.** Someone who wants "Azure Service Bus in
    .NET" gets a project whose `.csproj` references exactly one cloud package. No AWS, no GCP, no
